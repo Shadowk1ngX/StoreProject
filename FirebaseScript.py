@@ -41,18 +41,26 @@ def GetSingleItem(CollectionName,DocumentID):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def GetItemsByKey(CollectionName, category):
+def GetItemsByKey(CollectionName, Key, Value):
+    """
+    Retrieve all documents from a Firestore collection where a specified key matches a given value.
+
+    :param CollectionName: The name of the Firestore collection.
+    :param Key: The field name to filter by (e.g., 'category', 'price').
+    :param Value: The value to match for the specified field.
+    :return: A list of matching documents, with each document's ID and data.
+    """
     try:
-        # Query the collection for documents where 'category' equals the given category
-        query = db.collection(CollectionName).where("category", "==", category).stream()
+        # Query the collection for documents where the key matches the value
+        query = db.collection(CollectionName).where(Key, "==", Value).stream()
         
         results = []
         for doc in query:
             print(f"Document ID: {doc.id}, Data: {doc.to_dict()}")
-            results.append({"id": doc.id, "data": doc.to_dict()})  # Save both the document ID and its data
+            results.append({"id": doc.id, "data": doc.to_dict()})
         
         if not results:
-            print(f"No documents found with category: {category}")
+            print(f"No documents found where {Key} equals {Value}")
         
         return results
     except Exception as e:
@@ -100,6 +108,6 @@ data = {
 #ModifyItem("products","sia4VT8h8W01X3AiNtT5",data)
 #DeleteItem("products","sia4VT8h8W01X3AiNtT5")
 #GetSingleItem("products","2Jr8e8jmTNWriQ0OubC6")
-GetItemsByCategory
+GetItemsByCategory()
 
 #grab one item function is left to do
