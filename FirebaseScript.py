@@ -2,7 +2,7 @@ import firebase_admin as fba
 from firebase_admin import credentials, firestore
 
 #Variables
-cred = credentials.Certificate('storeproject-123cd-firebase-adminsdk-7n5lx-644cd6fb18.json')
+cred = credentials.Certificate('Key.json')
 app = fba.initialize_app(cred)
 db = firestore.client(app)
 
