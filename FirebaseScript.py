@@ -56,3 +56,39 @@ def GrabAllItems2(CollectionName):
 #This is a test
 GrabAllItems2('products')
 print("RAN")
+
+
+def AddItem(CollectionName, data):
+    try:
+        # Add the document
+        doc_ref = db.collection(CollectionName).add(data)
+        print(f"Document added with ID: {doc_ref[1].id}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def DeleteItem(CollectionName, document_id):
+    try:
+        # Delete the document
+        doc_ref = db.collection(CollectionName).document(document_id)
+        doc_ref.delete()
+        print(f"Document with ID: {document_id} deleted successfully.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def ModifyItem(CollectionName, document_id, update_data):
+    try:
+        # Update the document
+        doc_ref = db.collection(CollectionName).document(document_id)
+        doc_ref.update(update_data)
+        print(f"Document with ID: {document_id} updated successfully.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+
+
+
+
+
+
+#grab one item function is left to do
