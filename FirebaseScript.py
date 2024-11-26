@@ -60,7 +60,6 @@ def GetItemsByKey(CollectionName, category):
 
 def AddItem(CollectionName, data: list):
     try:
-        # Add the document
         doc_ref = db.collection(CollectionName).add(data)
         print(f"Document added with ID: {doc_ref[1].id}")
     except Exception as e:
@@ -68,22 +67,26 @@ def AddItem(CollectionName, data: list):
 
 def DeleteItem(CollectionName, document_id):
     try:
-        # Delete the document
         doc_ref = db.collection(CollectionName).document(document_id)
         doc_ref.delete()
         print(f"Document with ID: {document_id} deleted successfully.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
+# Testing Deleting a document
+DeleteItem('products', 'DOCUMENT_ID')
+
+# Function to modify a document
 def ModifyItem(CollectionName, document_id, update_data):
     try:
-        # Update the document
         doc_ref = db.collection(CollectionName).document(document_id)
         doc_ref.update(update_data)
         print(f"Document with ID: {document_id} updated successfully.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
+# Testing Modifying an existing document
+ModifyItem('products', 'DOCUMENT_ID', {'price': 89.99, 'stock': 15})
 
 #This is a test
 #GrabAllItems('products')
