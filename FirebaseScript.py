@@ -41,30 +41,35 @@ def GetSingleItem(CollectionName,DocumentID):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def GetItemsByKey(CollectionName, Key, Value):
+def GetItemsByKey(CollectionName, Field, Value):
     """
-    Retrieve all documents from a Firestore collection where a specified key matches a given value.
+    Retrieve all documents from a Firestore collection where a specific field equals a given value.
 
     :param CollectionName: The name of the Firestore collection.
-    :param Key: The field name to filter by (e.g., 'category', 'price').
+    :param Field: The field name to filter by.
     :param Value: The value to match for the specified field.
-    :return: A list of matching documents, with each document's ID and data.
+    :return: A list of documents with their ID and data.
     """
     try:
-        # Query the collection for documents where the key matches the value
-        query = db.collection(CollectionName).where(Key, "==", Value).stream()
+        print(f"Querying collection '{CollectionName}' where '{Field}' == '{Value}'")
+        query = db.collection(CollectionName).where(Field, "==", Value).stream()
         
         results = []
         for doc in query:
-            print(f"Document ID: {doc.id}, Data: {doc.to_dict()}")
-            results.append({"id": doc.id, "data": doc.to_dict()})
+            doc_data = doc.to_dict()
+            doc_data['id'] = doc.id  # Include document ID for reference
+            results.append(doc_data)
+            print(f"Document ID: {doc.id}, Data: {doc_data}")
         
         if not results:
-            print(f"No documents found where {Key} equals {Value}")
+            print(f"No documents found in '{CollectionName}' where '{Field}' equals '{Value}'")
         
         return results
     except Exception as e:
         print(f"An error occurred: {e}")
+        return []
+
+
 
 def AddItem(CollectionName, data: list):
     try:
@@ -81,9 +86,6 @@ def DeleteItem(CollectionName, document_id):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-# Testing Deleting a document
-DeleteItem('products', 'DOCUMENT_ID')
-
 # Function to modify a document
 def ModifyItem(CollectionName, document_id, update_data):
     try:
@@ -93,8 +95,6 @@ def ModifyItem(CollectionName, document_id, update_data):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-# Testing Modifying an existing document
-ModifyItem('products', 'DOCUMENT_ID', {'price': 89.99, 'stock': 15})
 
 #This is a test
 #GrabAllItems('products')
@@ -108,6 +108,9 @@ data = {
 #ModifyItem("products","sia4VT8h8W01X3AiNtT5",data)
 #DeleteItem("products","sia4VT8h8W01X3AiNtT5")
 #GetSingleItem("products","2Jr8e8jmTNWriQ0OubC6")
-GetItemsByCategory()
+#GetItemsByKey("products","category","Electronics")
 
 #grab one item function is left to do
+
+
+
