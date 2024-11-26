@@ -23,14 +23,10 @@ jobs:
           workload_identity_provider: "projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.GCP_POOL_NAME }}/providers/${{ secrets.GCP_PROVIDER_NAME }}"
           service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
-      # Install Firebase CLI (if not already installed)
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+      # Install dependencies for Firebase (if needed)
+      - name: Install Python dependencies
+        run: pip install firebase-admin
 
-      # Authenticate Firebase using the access token from Google Cloud
-      - name: Authenticate Firebase
-        run: firebase login:ci --token "$(gcloud auth print-access-token)"
-
-      # Run Firebase deployment
-      - name: Deploy to Firebase Hosting
-        run: firebase deploy --only hosting
+      # Run the Firebase script
+      - name: Run Firebase Script
+        run: python FirebaseScript.py
