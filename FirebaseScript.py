@@ -3,7 +3,8 @@ from firebase_admin import credentials, firestore
 
 #Variables
 cred = credentials.Certificate('Key.json')
-app = fba.initialize_app(cred)
+if not fba._apps:
+    app = fba.initialize_app(cred)
 db = firestore.client(app)
 
 def GrabAllItems(CollectionName):
