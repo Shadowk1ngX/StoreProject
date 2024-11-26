@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Setup Node.js (if your project requires Node.js)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'  # Adjust this as needed for your project
+
+      - name: Install Dependencies
+        run: npm install  # Or any other command to install dependencies
+
+      - name: Setup Firebase Service Account
+        run: |
+          echo '${{ secrets.DATABASEKEY }}' > ./firebase-key.json
+        env:
+          DATABASEKEY: ${{ secrets.DATABASEKEY }}
+
+      - name: Authenticate with Firebase
+        run: firebase use --add $(cat firebase-key.json)  # Adjust this if needed for your Firebase operations
+
+      - name: Deploy to Firebase
+        run: firebase deploy --only hosting --token $(cat firebase-key.json)  # Assumes you are deploying to Firebase Hosting
