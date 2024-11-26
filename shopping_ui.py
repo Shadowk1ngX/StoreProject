@@ -1,52 +1,78 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-class ShoppingApp(QtWidgets.QWidget):
+class ModernShoppingApp(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
 
+        # Main Window Settings
+        self.setWindowTitle("Modern Shopping App")
+        self.resize(1000, 700)
+        self.setStyleSheet("background-color: #f8f9fa; color: #343a40; font-family: Arial; font-size: 14px;")
+
         # Main Layout
-        self.setWindowTitle("Shopping App")
-        self.resize(800, 600)
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
+        # Header Section
+        self.header_label = QtWidgets.QLabel("🛒 Modern Shopping App")
+        self.header_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #007bff; margin: 10px;")
+        self.header_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.main_layout.addWidget(self.header_label)
+
         # Filter Section
-        self.filter_layout = QtWidgets.QHBoxLayout()
+        self.filter_frame = QtWidgets.QFrame()
+        self.filter_frame.setStyleSheet("background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px;")
+        self.filter_layout = QtWidgets.QHBoxLayout(self.filter_frame)
         self.filter_label = QtWidgets.QLabel("Filter by Category:")
         self.filter_combo = QtWidgets.QComboBox()
         self.filter_combo.addItems(["All", "Electronics", "Clothing", "Furniture"])
+        self.filter_combo.setStyleSheet("padding: 5px;")
         self.filter_button = QtWidgets.QPushButton("Apply Filter")
+        self.filter_button.setStyleSheet("background-color: #007bff; color: white; padding: 5px 10px; border-radius: 5px;")
         self.filter_layout.addWidget(self.filter_label)
         self.filter_layout.addWidget(self.filter_combo)
         self.filter_layout.addWidget(self.filter_button)
-        self.main_layout.addLayout(self.filter_layout)
+        self.main_layout.addWidget(self.filter_frame)
 
-        # Items and Cart Section
-        self.items_cart_layout = QtWidgets.QHBoxLayout()
+        # Splitter for Items and Cart
+        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
 
-        # Items List Section
-        self.items_layout = QtWidgets.QVBoxLayout()
-        self.items_label = QtWidgets.QLabel("Items")
+        # Items Section
+        self.items_frame = QtWidgets.QFrame()
+        self.items_frame.setStyleSheet("background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px;")
+        self.items_layout = QtWidgets.QVBoxLayout(self.items_frame)
+        self.items_label = QtWidgets.QLabel("🛍️ Items")
+        self.items_label.setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 10px;")
         self.items_list = QtWidgets.QListWidget()
+        self.items_list.setStyleSheet("border: 1px solid #dee2e6; border-radius: 5px; padding: 5px;")
         self.view_item_button = QtWidgets.QPushButton("View Item")
+        self.view_item_button.setStyleSheet("background-color: #28a745; color: white; padding: 5px 10px; border-radius: 5px; margin-top: 5px;")
         self.add_to_cart_button = QtWidgets.QPushButton("Add to Cart")
+        self.add_to_cart_button.setStyleSheet("background-color: #ffc107; color: white; padding: 5px 10px; border-radius: 5px; margin-top: 5px;")
         self.items_layout.addWidget(self.items_label)
         self.items_layout.addWidget(self.items_list)
         self.items_layout.addWidget(self.view_item_button)
         self.items_layout.addWidget(self.add_to_cart_button)
 
         # Cart Section
-        self.cart_layout = QtWidgets.QVBoxLayout()
-        self.cart_label = QtWidgets.QLabel("Cart")
+        self.cart_frame = QtWidgets.QFrame()
+        self.cart_frame.setStyleSheet("background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px;")
+        self.cart_layout = QtWidgets.QVBoxLayout(self.cart_frame)
+        self.cart_label = QtWidgets.QLabel("🛒 Cart")
+        self.cart_label.setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 10px;")
         self.cart_list = QtWidgets.QListWidget()
+        self.cart_list.setStyleSheet("border: 1px solid #dee2e6; border-radius: 5px; padding: 5px;")
         self.checkout_button = QtWidgets.QPushButton("Checkout")
+        self.checkout_button.setStyleSheet("background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 5px; margin-top: 5px;")
         self.cart_layout.addWidget(self.cart_label)
         self.cart_layout.addWidget(self.cart_list)
         self.cart_layout.addWidget(self.checkout_button)
 
-        self.items_cart_layout.addLayout(self.items_layout)
-        self.items_cart_layout.addLayout(self.cart_layout)
+        # Add Frames to Splitter
+        self.splitter.addWidget(self.items_frame)
+        self.splitter.addWidget(self.cart_frame)
 
-        self.main_layout.addLayout(self.items_cart_layout)
+        # Add Splitter to Main Layout
+        self.main_layout.addWidget(self.splitter)
 
         # Signals
         self.filter_button.clicked.connect(self.filter_items)
@@ -127,6 +153,6 @@ if __name__ == "__main__":
     import sys
 
     app = QtWidgets.QApplication(sys.argv)
-    window = ShoppingApp()
+    window = ModernShoppingApp()
     window.show()
     sys.exit(app.exec_())
