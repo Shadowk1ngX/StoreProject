@@ -33,38 +33,59 @@ def GrabAllItems(CollectionName):
 GrabAllItems('products')
 print("RAN")
 
+# Function to GrabOneItem
+def GrabOneItem(CollectionName, DocumentID):
+    try:
+        print("Grabbing One Item")
+        doc_ref = db.collection(CollectionName).document(DocumentID)
+        doc = doc_ref.get()
+        if doc.exists:
+            print(f"Document data: {doc.to_dict()}")
+        else:
+            print("No such document!")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
+# Testing the function GrabOneItem
+print("Testing GrabOneItem")
+GrabOneItem('products', 'DOCUMENT_ID')  
+
+# Function to add a new document
 def AddItem(CollectionName, data):
     try:
-        # Add the document
         doc_ref = db.collection(CollectionName).add(data)
         print(f"Document added with ID: {doc_ref[1].id}")
     except Exception as e:
         print(f"An error occurred: {e}")
 
+# Testing Adding a new document
+AddItem('products', {'name': 'New Product', 'price': 99.99, 'stock': 20})
+
+# Function to delete a document
 def DeleteItem(CollectionName, document_id):
     try:
-        # Delete the document
         doc_ref = db.collection(CollectionName).document(document_id)
         doc_ref.delete()
         print(f"Document with ID: {document_id} deleted successfully.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
+# Testing Deleting a document
+DeleteItem('products', 'DOCUMENT_ID')
+
+# Function to modify a document
 def ModifyItem(CollectionName, document_id, update_data):
     try:
-        # Update the document
         doc_ref = db.collection(CollectionName).document(document_id)
         doc_ref.update(update_data)
         print(f"Document with ID: {document_id} updated successfully.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
+# Testing Modifying an existing document
+ModifyItem('products', 'DOCUMENT_ID', {'price': 89.99, 'stock': 15})
 
 
 
 
-
-
-
-#grab one item function is left to do
+#Note: Replace 'DOCUMENT_ID' with the actual ID of the document you want to retrieve, add, delete, mod
