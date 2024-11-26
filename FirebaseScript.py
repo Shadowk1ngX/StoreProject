@@ -8,7 +8,7 @@ if not fba._apps:
     app = fba.initialize_app(cred)
 db = firestore.client(app)
 
-def GrabAllItems(CollectionName):
+def GetAllItems(CollectionName):
     print("Grabbing All Items")
     docs = (
         db.collection(CollectionName)
@@ -28,19 +28,43 @@ def GrabAllItems(CollectionName):
         print(f"Document Data: {doc_data['data']}")
         print()
 
+def GetSingleItem(CollectionName,DocumentID):
+    print("Grabbing Item")
+    try:
+        doc_ref = db.collection(CollectionName).document(DocumentID)
+        doc = doc_ref.get()
+        if doc.exists:
+            print(f"Document data: {doc.to_dict()}")
+            return doc.to_dict()  # Return the document data as a dictionary
+        else:
+            print(f"No document found with ID: {DocumentID}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
-#This is a test
-GrabAllItems('products')
-print("RAN")
+def GetItemsByKey(CollectionName, category):
+    try:
+        # Query the collection for documents where 'category' equals the given category
+        query = db.collection(CollectionName).where("category", "==", category).stream()
+        
+        results = []
+        for doc in query:
+            print(f"Document ID: {doc.id}, Data: {doc.to_dict()}")
+            results.append({"id": doc.id, "data": doc.to_dict()})  # Save both the document ID and its data
+        
+        if not results:
+            print(f"No documents found with category: {category}")
+        
+        return results
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
-
-def AddItem(CollectionName, data):
+def AddItem(CollectionName, data: list):
     try:
         # Add the document
         doc_ref = db.collection(CollectionName).add(data)
         print(f"Document added with ID: {doc_ref[1].id}")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Doc not created! An error occurred: {e}")
 
 def DeleteItem(CollectionName, document_id):
     try:
@@ -61,10 +85,18 @@ def ModifyItem(CollectionName, document_id, update_data):
         print(f"An error occurred: {e}")
 
 
+#This is a test
+#GrabAllItems('products')
+data = {
+    "name" : "King",
+    "age" : 18,
+    "salary" : 30000
+}
 
-
-
-
-
+#AddItem("products", data)
+#ModifyItem("products","sia4VT8h8W01X3AiNtT5",data)
+#DeleteItem("products","sia4VT8h8W01X3AiNtT5")
+#GetSingleItem("products","2Jr8e8jmTNWriQ0OubC6")
+GetItemsByCategory
 
 #grab one item function is left to do
