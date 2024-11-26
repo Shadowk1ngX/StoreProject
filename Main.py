@@ -1,3 +1,0 @@
-
-
-Cars = {"Mazda","Toyota"}
