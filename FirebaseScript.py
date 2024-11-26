@@ -2,9 +2,9 @@ import firebase_admin as fba
 from firebase_admin import credentials, firestore
 
 #Variables
-cred = credentials.Certificate("DatabaseAcsess.json")
-fba.initialize_app(cred)
-db = firestore.client()
+cred = credentials.Certificate('teststore-df541-firebase-adminsdk-cjv6j-7fbb6ebd55.json')
+app = fba.initialize_app(cred)
+db = firestore.client(app)
 
 def GrabAllItems(CollectionName):
     print("Grabbing All Items")
@@ -29,9 +29,10 @@ def GrabAllItems(CollectionName):
         print()
 
 def GrabAllItems2(CollectionName):
-    print("Grabbing All Items")
+    
     try:
         # Use get() to fetch the documents
+        print("Grabbing All Items")
         docs = db.collection(CollectionName).get()
         print("Documents Retrieved")
         DocList = []
@@ -50,8 +51,7 @@ def GrabAllItems2(CollectionName):
 
     except Exception as e:
         print(f"An error occurred: {e}")
+   
 
-
-
-GrabAllItems2("products")
+GrabAllItems2('Items')
 print("RAN")
