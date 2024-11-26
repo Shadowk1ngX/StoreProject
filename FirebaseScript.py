@@ -14,17 +14,15 @@ def GrabAllItems(CollectionName):
         db.collection(CollectionName)
         .stream()
     )
-    print("Stream Started")
+    
     DocList = []
 
-    print("Insert Data")
     for doc in docs:
         doc_data = doc.to_dict()
         doc_data["id"] = doc.id
         doc_data['data'] =  doc._data
         DocList.append(doc_data)
     
-    print("Show Data")
     for doc_data in DocList:
         print(f"Document ID: {doc_data['id']}")
         print(f"Document Data: {doc_data['data']}")
