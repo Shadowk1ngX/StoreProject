@@ -2,7 +2,7 @@ import firebase_admin as fba
 from firebase_admin import credentials, firestore
 
 #Variables
-cred = credentials.Certificate('teststore-df541-firebase-adminsdk-cjv6j-7fbb6ebd55.json')
+cred = credentials.Certificate('storeproject-123cd-firebase-adminsdk-7n5lx-644cd6fb18.json')
 app = fba.initialize_app(cred)
 db = firestore.client(app)
 
@@ -53,5 +53,5 @@ def GrabAllItems2(CollectionName):
         print(f"An error occurred: {e}")
    
 
-GrabAllItems2('Items')
+GrabAllItems2('products')
 print("RAN")
