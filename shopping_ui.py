@@ -156,27 +156,106 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.cart.clear()
 
     def toggle_theme(self):
-        """Toggle between light and dark themes."""
-        if self.current_theme == "light":
-            self.apply_dark_theme()
-            self.theme_toggle_button.setText("Switch to Light Theme")
-        else:
-            self.apply_light_theme()
-            self.theme_toggle_button.setText("Switch to Dark Theme")
+    """Toggle between light and dark themes."""
+    if self.current_theme == "light":
+        self.apply_dark_theme()
+        self.theme_toggle_button.setText("Switch to Light Theme")
+    else:
+        self.apply_light_theme()
+        self.theme_toggle_button.setText("Switch to Dark Theme")
 
-    def apply_light_theme(self):
-        """Apply light theme styles."""
-        self.setStyleSheet("""
-            background-color: #f8f9fa; color: #343a40; font-family: Arial; font-size: 14px;
-            QPushButton { border-radius: 5px; padding: 5px 10px; }
-        """)
-        self.current_theme = "light"
+def apply_light_theme(self):
+    """Apply light theme styles."""
+    self.current_theme = "light"
+    self.setStyleSheet("""
+        QWidget {
+            background-color: #f8f9fa;
+            color: #343a40;
+            font-family: Arial;
+            font-size: 14px;
+        }
+        QPushButton {
+            background-color: #007bff;
+            color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 5px 10px;
+        }
+        QPushButton:hover {
+            background-color: #0056b3;
+        }
+        QLabel {
+            color: #343a40;
+        }
+        QListWidget {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            color: #343a40;
+            padding: 5px;
+        }
+        QFrame {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        QComboBox {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 5px;
+            color: #343a40;
+        }
+        QComboBox QAbstractItemView {
+            background-color: #ffffff;
+        }
+    """)
 
-    def apply_dark_theme(self):
-        """Apply dark theme styles."""
-        self.setStyleSheet("""
-            background-color: #2b2b2b; color: #f5f5f5; font-family: Arial; font-size: 14px;
-            QPushButton { background-color: #444; color: white; border-radius: 5px; padding: 5px 10px; }
-            QListWidget { background-color: #3b3b3b; color: white; border-radius: 5px; padding: 5px; }
-        """)
+def apply_dark_theme(self):
+    """Apply dark theme styles."""
+    self.current_theme = "dark"
+    self.setStyleSheet("""
+        QWidget {
+            background-color: #2b2b2b;
+            color: #f5f5f5;
+            font-family: Arial;
+            font-size: 14px;
+        }
+        QPushButton {
+            background-color: #444;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 5px 10px;
+        }
+        QPushButton:hover {
+            background-color: #666;
+        }
+        QLabel {
+            color: #f5f5f5;
+        }
+        QListWidget {
+            background-color: #3b3b3b;
+            border: 1px solid #555;
+            border-radius: 5px;
+            color: #f5f5f5;
+            padding: 5px;
+        }
+        QFrame {
+            background-color: #3b3b3b;
+            border: 1px solid #555;
+            border-radius: 8px;
+        }
+        QComboBox {
+            background-color: #3b3b3b;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 5px;
+            color: #f5f5f5;
+        }
+        QComboBox QAbstractItemView {
+            background-color: #3b3b3b;
+        }
+    """)
+
        
