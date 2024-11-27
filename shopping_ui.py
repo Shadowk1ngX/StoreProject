@@ -1,5 +1,6 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 import FirebaseScript
+import requests
 
 class ModernShoppingApp(QtWidgets.QWidget):
     def __init__(self):
@@ -10,6 +11,9 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.resize(1000, 700)
         self.current_theme = "dark"  # Default theme
         self.apply_dark_theme()
+
+        # Initialize the cart as an empty list
+        self.cart = []
 
         # Main Layout
         self.main_layout = QtWidgets.QVBoxLayout(self)
@@ -78,21 +82,63 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.items = self.fetch_items_from_firebase("products") 
         self.load_items()
 
+        # Fetch categories from the database and update the combo box
+        self.update_categories()
+
 
     def view_item(self):
-        """View the details of the selected item."""
+        """View the details of the selected item, including the image."""
         selected_item = self.items_list.currentItem()
         if not selected_item:
             QtWidgets.QMessageBox.warning(self, "No Item Selected", "Please select an item to view.")
             return
+
+        # Extract the item name from the selected list item
         item_name = selected_item.text().split(" - $")[0]
+        # Find the corresponding item in self.items
         item = next((item for item in self.items if item["name"] == item_name), None)
+
         if item:
-            QtWidgets.QMessageBox.information(
-                self,
-                "Item Details",
-                f"Name: {item['name']}\nCategory: {item['category']}\nPrice: ${item['price']}",
-            )
+            # Create a pop-up dialog
+            dialog = QtWidgets.QDialog(self)
+            dialog.setWindowTitle(f"Item Details: {item['name']}")
+            dialog_layout = QtWidgets.QVBoxLayout(dialog)
+
+            # Load and display the image
+            image_label = QtWidgets.QLabel()
+            try:
+                if "image" in item and item["image"]:
+                    pixmap = QtGui.QPixmap()
+                    image_data = self.fetch_image_data(item["image"])
+                    if image_data and pixmap.loadFromData(image_data):
+                        image_label.setPixmap(pixmap.scaled(300, 300, QtCore.Qt.KeepAspectRatio))
+                    else:
+                        image_label.setText("Image failed to load.")
+                else:
+                    image_label.setText("No image available.")
+            except Exception as e:
+                print(f"Error loading image: {e}")  # Log the error for debugging
+                image_label.setText("No image available at the moment.")
+
+            # Display the item name and category
+            name_label = QtWidgets.QLabel(f"Name: {item['name']}")
+            category_label = QtWidgets.QLabel(f"Category: {item['category']}")
+            price_label = QtWidgets.QLabel(f"Price: ${item['price']:.2f}")
+            
+            # Add widgets to the dialog layout
+            dialog_layout.addWidget(name_label)
+            dialog_layout.addWidget(category_label)
+            dialog_layout.addWidget(price_label)
+            dialog_layout.addWidget(image_label)
+
+            # Add a close button
+            close_button = QtWidgets.QPushButton("Close")
+            close_button.clicked.connect(dialog.close)
+            dialog_layout.addWidget(close_button)
+
+            # Show the dialog
+            dialog.exec_()
+
 
     def add_to_cart(self):
         """Add the selected item to the cart."""
@@ -100,8 +146,21 @@ class ModernShoppingApp(QtWidgets.QWidget):
         if not selected_item:
             QtWidgets.QMessageBox.warning(self, "No Item Selected", "Please select an item to add to the cart.")
             return
-        self.cart_list.addItem(selected_item.text())
-        self.cart.append(selected_item.text())
+
+        # Extract the name and price from the selected item's text
+        item_text = selected_item.text()
+        item_parts = item_text.split(" - $")  # Split to separate name and price
+        if len(item_parts) >= 2:  # Ensure both name and price exist
+            item_name = item_parts[0]
+            item_price = "$" + item_parts[1].split(" - ")[0]  # Extract price
+            display_text = f"{item_name} - {item_price}"  # Format for cart display
+
+            # Add the formatted item to the cart list and cart storage
+            self.cart_list.addItem(display_text)
+            self.cart.append(display_text)
+        else:
+            QtWidgets.QMessageBox.warning(self, "Invalid Item", "Unable to extract item details. Please try again.")
+
 
     def checkout(self):
         """Handle checkout process."""
@@ -154,13 +213,33 @@ class ModernShoppingApp(QtWidgets.QWidget):
                     "name": item.get("name", "Unnamed"),  # Get name or default to "Unnamed"
                     "category": item.get("category", "Unknown"),  # Get category or default to "Unknown"
                     "price": item.get("price", 0.0),  # Get price or default to 0.0
-                    "stock": item.get("stock", 0)
+                    "stock": item.get("stock", 0),
+                    "image": item.get("image", ""),  # Include the image field
                 }
                 for item in items
             ]
         except Exception as e:
             print(f"Error fetching items from Firebase: {e}")
             return []
+
+
+    def update_categories(self):
+        """Fetch unique categories from the database and populate the combo box."""
+        try:
+            print("Running")
+            # Example: Fetch all items from the database
+            items = FirebaseScript.GetAllItems("products")
+
+            # Extract unique categories from the items
+            categories = set(item.get("category", "Unknown") for item in items)
+
+            # Clear existing categories and update the combo box
+            self.filter_combo.clear()
+            self.filter_combo.addItem("All")  # Add "All" as the default option
+            self.filter_combo.addItems(sorted(categories))  # Add categories alphabetically
+        except Exception as e:
+            print(f"Error fetching categories from Firebase: {e}")
+            QtWidgets.QMessageBox.warning(self, "Error", "Unable to fetch categories from the database.")
 
 
     def load_items(self):
@@ -177,4 +256,15 @@ class ModernShoppingApp(QtWidgets.QWidget):
             item for item in self.items if selected_category == "All" or item["category"] == selected_category
         ]
         for item in filtered_items:
-            self.items_list.addItem(f"{item['name']} - Stock: {item['price']}")
+            self.items_list.addItem(f"{item['name']} - ${item['price']} - Stock: {item['stock']}")
+
+
+    def fetch_image_data(self, image_url):
+        """Fetch image data from a URL."""
+        try:
+            response = requests.get(image_url)
+            if response.status_code == 200:
+                return response.content
+        except Exception as e:
+            print(f"Failed to fetch image: {e}")
+        return None
