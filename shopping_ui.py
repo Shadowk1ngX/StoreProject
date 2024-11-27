@@ -155,7 +155,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.cart_list.clear()
         self.cart.clear()
 
-    def toggle_theme(self):
+def toggle_theme(self):
     """Toggle between light and dark themes."""
     if self.current_theme == "light":
         self.apply_dark_theme()
