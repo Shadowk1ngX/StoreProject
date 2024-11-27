@@ -13,7 +13,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
         # Header Section
-        self.header_label = QtWidgets.QLabel("🛒 Modern Shopping App")
+        self.header_label = QtWidgets.QLabel("🛒 Temp Name")
         self.header_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #007bff; margin: 10px;")
         self.header_label.setAlignment(QtCore.Qt.AlignCenter)
         self.main_layout.addWidget(self.header_label)
@@ -148,11 +148,3 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.cart_list.clear()
         self.cart.clear()
 
-
-if __name__ == "__main__":
-    import sys
-
-    app = QtWidgets.QApplication(sys.argv)
-    window = ModernShoppingApp()
-    window.show()
-    sys.exit(app.exec_())
