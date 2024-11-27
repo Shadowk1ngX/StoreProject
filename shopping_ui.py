@@ -20,10 +20,25 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
         # Header Section
+        self.header_frame = QtWidgets.QFrame()  # A frame to house header and button
+        self.header_layout = QtWidgets.QHBoxLayout(self.header_frame)  # Horizontal layout for the header
         self.header_label = QtWidgets.QLabel("🛒 Temp Name")
         self.header_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #007bff; margin: 10px;")
         self.header_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.main_layout.addWidget(self.header_label)
+        #self.main_layout.addWidget(self.header_label)
+
+         # Login/Sign Up Button
+        self.login_button = QtWidgets.QPushButton("Login / Sign Up")
+        self.login_button.setStyleSheet("background-color: #007bff; color: white; padding: 5px 10px; border-radius: 5px;")
+        self.login_button.clicked.connect(self.show_login_dialog)
+
+        # Add widgets to the header layout
+        self.header_layout.addWidget(self.header_label)
+        self.header_layout.addStretch()  # Push the login button to the far right
+        self.header_layout.addWidget(self.login_button)
+
+        # Add the header frame to the main layout
+        self.main_layout.addWidget(self.header_frame)
 
         # Theme Toggle
         self.theme_toggle_button = QtWidgets.QPushButton("Switch to Light Theme")
@@ -142,6 +157,36 @@ class ModernShoppingApp(QtWidgets.QWidget):
             # Show the dialog
             dialog.exec_()
 
+    def show_login_dialog(self):
+        """Show a login/sign-up dialog."""
+        dialog = QtWidgets.QDialog(self)
+        dialog.setWindowTitle("Login / Sign Up")
+        dialog_layout = QtWidgets.QVBoxLayout(dialog)
+
+        # Username and Password Fields
+        username_label = QtWidgets.QLabel("Username:")
+        username_field = QtWidgets.QLineEdit()
+        password_label = QtWidgets.QLabel("Password:")
+        password_field = QtWidgets.QLineEdit()
+        password_field.setEchoMode(QtWidgets.QLineEdit.Password)
+
+        # Buttons
+        login_button = QtWidgets.QPushButton("Login")
+        signup_button = QtWidgets.QPushButton("Sign Up")
+        close_button = QtWidgets.QPushButton("Close")
+        close_button.clicked.connect(dialog.close)
+
+        # Add widgets to the dialog layout
+        dialog_layout.addWidget(username_label)
+        dialog_layout.addWidget(username_field)
+        dialog_layout.addWidget(password_label)
+        dialog_layout.addWidget(password_field)
+        dialog_layout.addWidget(login_button)
+        dialog_layout.addWidget(signup_button)
+        dialog_layout.addWidget(close_button)
+
+        # Show the dialog
+        dialog.exec_()
 
     def add_to_cart(self):
         """Add the selected item to the cart."""
