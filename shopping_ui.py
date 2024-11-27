@@ -1,14 +1,15 @@
 from PyQt5 import QtWidgets, QtCore
+import FirebaseScript
 
 class ModernShoppingApp(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
 
         # Main Window Settings
-        self.setWindowTitle("Modern Shopping App")
+        self.setWindowTitle("Store Project")
         self.resize(1000, 700)
-        self.current_theme = "light"  # Default theme
-        self.apply_light_theme()
+        self.current_theme = "dark"  # Default theme
+        self.apply_dark_theme()
 
         # Main Layout
         self.main_layout = QtWidgets.QVBoxLayout(self)
@@ -20,7 +21,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.main_layout.addWidget(self.header_label)
 
         # Theme Toggle
-        self.theme_toggle_button = QtWidgets.QPushButton("Switch to Dark Theme")
+        self.theme_toggle_button = QtWidgets.QPushButton("Switch to Light Theme")
         self.theme_toggle_button.setStyleSheet("background-color: #007bff; color: white; padding: 5px 10px; border-radius: 5px;")
         self.theme_toggle_button.clicked.connect(self.toggle_theme)
         self.main_layout.addWidget(self.theme_toggle_button)
@@ -73,31 +74,10 @@ class ModernShoppingApp(QtWidgets.QWidget):
         # Add Splitter to Main Layout
         self.main_layout.addWidget(self.splitter)
 
-        # Sample Items
-        self.items = [
-            {"name": "PlayStation 5", "category": "Electronics", "price": 499.99},
-            {"name": "Xbox Series X", "category": "Electronics", "price": 499.99},
-            {"name": "Office Chair", "category": "Furniture", "price": 89.99},
-            {"name": "T-shirt", "category": "Clothing", "price": 19.99},
-        ]
-        self.cart = []
+        # Fetch and Load Items from Firebase
+        self.items = self.fetch_items_from_firebase("products") 
         self.load_items()
 
-    def load_items(self):
-        """Load items into the list widget."""
-        self.items_list.clear()
-        for item in self.items:
-            self.items_list.addItem(f"{item['name']} - ${item['price']}")
-
-    def filter_items(self):
-        """Filter items based on the selected category."""
-        selected_category = self.filter_combo.currentText()
-        self.items_list.clear()
-        filtered_items = [
-            item for item in self.items if selected_category == "All" or item["category"] == selected_category
-        ]
-        for item in filtered_items:
-            self.items_list.addItem(f"{item['name']} - ${item['price']}")
 
     def view_item(self):
         """View the details of the selected item."""
@@ -163,3 +143,38 @@ class ModernShoppingApp(QtWidgets.QWidget):
             QPushButton { background-color: #444; color: white; }
             QListWidget { background-color: #3b3b3b; color: white; }
         """)
+    
+    def fetch_items_from_firebase(self, collection_name):
+        """Fetch items from Firebase and transform them into the required format."""
+        try:
+            items = FirebaseScript.GetAllItems(collection_name)
+            # Transform the data into a format suitable for the app
+            return [
+                {
+                    "name": item.get("name", "Unnamed"),  # Get name or default to "Unnamed"
+                    "category": item.get("category", "Unknown"),  # Get category or default to "Unknown"
+                    "price": item.get("price", 0.0),  # Get price or default to 0.0
+                    "stock": item.get("stock", 0)
+                }
+                for item in items
+            ]
+        except Exception as e:
+            print(f"Error fetching items from Firebase: {e}")
+            return []
+
+
+    def load_items(self):
+        """Load items into the list widget."""
+        self.items_list.clear()
+        for item in self.items:
+            self.items_list.addItem(f"{item['name']} - ${item['price']} - ${item['stock']}")
+
+    def filter_items(self):
+        """Filter items based on the selected category."""
+        selected_category = self.filter_combo.currentText()
+        self.items_list.clear()
+        filtered_items = [
+            item for item in self.items if selected_category == "All" or item["category"] == selected_category
+        ]
+        for item in filtered_items:
+            self.items_list.addItem(f"{item['name']} - ${item['price']}")

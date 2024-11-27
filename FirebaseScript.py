@@ -21,12 +21,14 @@ def GetAllItems(CollectionName):
         doc_data = doc.to_dict()
         doc_data["id"] = doc.id
         doc_data['data'] =  doc._data
-        DocList.append(doc_data)
+        DocList.append(doc_data['data'])
     
-    for doc_data in DocList:
-        print(f"Document ID: {doc_data['id']}")
-        print(f"Document Data: {doc_data['data']}")
-        print()
+    #for doc_data in DocList:
+    #    print(f"Document ID: {doc_data['id']}")
+     #   print(f"Document Data: {doc_data['data']}")
+    #    print()
+    
+    return DocList
 
 def GetSingleItem(CollectionName,DocumentID):
     print("Grabbing Item")
