@@ -167,7 +167,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
         """Load items into the list widget."""
         self.items_list.clear()
         for item in self.items:
-            self.items_list.addItem(f"{item['name']} - ${item['price']} - ${item['stock']}")
+            self.items_list.addItem(f"{item['name']} - ${item['price']} - Stock: {item['stock']}")
 
     def filter_items(self):
         """Filter items based on the selected category."""
@@ -177,4 +177,4 @@ class ModernShoppingApp(QtWidgets.QWidget):
             item for item in self.items if selected_category == "All" or item["category"] == selected_category
         ]
         for item in filtered_items:
-            self.items_list.addItem(f"{item['name']} - ${item['price']}")
+            self.items_list.addItem(f"{item['name']} - Stock: {item['price']}")
