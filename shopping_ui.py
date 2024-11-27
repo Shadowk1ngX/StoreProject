@@ -7,7 +7,8 @@ class ModernShoppingApp(QtWidgets.QWidget):
         # Main Window Settings
         self.setWindowTitle("Modern Shopping App")
         self.resize(1000, 700)
-        self.setStyleSheet("background-color: #f8f9fa; color: #343a40; font-family: Arial; font-size: 14px;")
+        self.current_theme = "light"  # Default theme
+        self.apply_light_theme()
 
         # Main Layout
         self.main_layout = QtWidgets.QVBoxLayout(self)
@@ -17,6 +18,12 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.header_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #007bff; margin: 10px;")
         self.header_label.setAlignment(QtCore.Qt.AlignCenter)
         self.main_layout.addWidget(self.header_label)
+
+        # Theme Toggle
+        self.theme_toggle_button = QtWidgets.QPushButton("Switch to Dark Theme")
+        self.theme_toggle_button.setStyleSheet("background-color: #007bff; color: white; padding: 5px 10px; border-radius: 5px;")
+        self.theme_toggle_button.clicked.connect(self.toggle_theme)
+        self.main_layout.addWidget(self.theme_toggle_button)
 
         # Filter Section
         self.filter_frame = QtWidgets.QFrame()
@@ -148,3 +155,28 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.cart_list.clear()
         self.cart.clear()
 
+    def toggle_theme(self):
+        """Toggle between light and dark themes."""
+        if self.current_theme == "light":
+            self.apply_dark_theme()
+            self.theme_toggle_button.setText("Switch to Light Theme")
+        else:
+            self.apply_light_theme()
+            self.theme_toggle_button.setText("Switch to Dark Theme")
+
+    def apply_light_theme(self):
+        """Apply light theme styles."""
+        self.setStyleSheet("""
+            background-color: #f8f9fa; color: #343a40; font-family: Arial; font-size: 14px;
+            QPushButton { border-radius: 5px; padding: 5px 10px; }
+        """)
+        self.current_theme = "light"
+
+    def apply_dark_theme(self):
+        """Apply dark theme styles."""
+        self.setStyleSheet("""
+            background-color: #2b2b2b; color: #f5f5f5; font-family: Arial; font-size: 14px;
+            QPushButton { background-color: #444; color: white; border-radius: 5px; padding: 5px 10px; }
+            QListWidget { background-color: #3b3b3b; color: white; border-radius: 5px; padding: 5px; }
+        """)
+       
