@@ -14,6 +14,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
         # Initialize the cart as an empty list
         self.cart = []
+        self.total_price = 0.0
 
         # Main Layout
         self.main_layout = QtWidgets.QVBoxLayout(self)
@@ -43,9 +44,6 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.filter_layout.addWidget(self.filter_button)
         self.main_layout.addWidget(self.filter_frame)
 
-        # Splitter for Items and Cart
-        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-
         # Items Section
         self.items_frame = QtWidgets.QFrame()
         self.items_layout = QtWidgets.QVBoxLayout(self.items_frame)
@@ -65,13 +63,18 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.cart_layout = QtWidgets.QVBoxLayout(self.cart_frame)
         self.cart_label = QtWidgets.QLabel("🛒 Cart")
         self.cart_list = QtWidgets.QListWidget()
+        self.total_price_label = QtWidgets.QLabel("Total: $0.00")  # Label to display the total price
         self.checkout_button = QtWidgets.QPushButton("Checkout")
         self.checkout_button.clicked.connect(self.checkout)
+
+        # Add widgets to the cart layout
         self.cart_layout.addWidget(self.cart_label)
         self.cart_layout.addWidget(self.cart_list)
+        self.cart_layout.addWidget(self.total_price_label)
         self.cart_layout.addWidget(self.checkout_button)
 
-        # Add Frames to Splitter
+        # Splitter for Items and Cart
+        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
         self.splitter.addWidget(self.items_frame)
         self.splitter.addWidget(self.cart_frame)
 
@@ -152,14 +155,53 @@ class ModernShoppingApp(QtWidgets.QWidget):
         item_parts = item_text.split(" - $")  # Split to separate name and price
         if len(item_parts) >= 2:  # Ensure both name and price exist
             item_name = item_parts[0]
-            item_price = "$" + item_parts[1].split(" - ")[0]  # Extract price
-            display_text = f"{item_name} - {item_price}"  # Format for cart display
+            item_price = float(item_parts[1].split(" - ")[0])  # Extract price as float
 
-            # Add the formatted item to the cart list and cart storage
-            self.cart_list.addItem(display_text)
-            self.cart.append(display_text)
+            # Create a custom widget for the cart item with a "Remove X" button
+            cart_item_widget = QtWidgets.QWidget()
+            cart_item_layout = QtWidgets.QHBoxLayout(cart_item_widget)
+            cart_item_label = QtWidgets.QLabel(f"{item_name} - ${item_price:.2f}")
+            remove_button = QtWidgets.QPushButton("X")
+            remove_button.setStyleSheet("color: red; font-weight: bold;")
+            remove_button.clicked.connect(lambda: self.remove_from_cart(cart_item_widget, item_price))
+
+            # Add the label and button to the layout
+            cart_item_layout.addWidget(cart_item_label)
+            cart_item_layout.addWidget(remove_button)
+            cart_item_layout.setContentsMargins(0, 0, 0, 0)  # Remove extra spacing
+            cart_item_widget.setLayout(cart_item_layout)
+
+            # Add the custom widget to the cart list
+            list_item = QtWidgets.QListWidgetItem(self.cart_list)
+            list_item.setSizeHint(cart_item_widget.sizeHint())
+            self.cart_list.addItem(list_item)
+            self.cart_list.setItemWidget(list_item, cart_item_widget)
+
+            # Update the total price
+            self.cart.append((item_name, item_price))
+            self.update_total_price(item_price)
         else:
             QtWidgets.QMessageBox.warning(self, "Invalid Item", "Unable to extract item details. Please try again.")
+          
+
+
+    def remove_from_cart(self, cart_item_widget, item_price):
+        """Remove an item from the cart."""
+        # Remove the widget from the cart_list visually
+        for i in range(self.cart_list.count()):
+            item = self.cart_list.item(i)
+            if self.cart_list.itemWidget(item) == cart_item_widget:
+                self.cart_list.takeItem(i)  # Remove the widget from the list
+                break
+
+        # Remove only one instance of the item from the cart list (not all instances)
+        for cart_item in self.cart:
+            if cart_item[1] == item_price:  # Match the price
+                self.cart.remove(cart_item)  # Remove the first matching instance
+                break
+
+        # Update the total price
+        self.update_total_price(-item_price)
 
 
     def checkout(self):
@@ -167,7 +209,8 @@ class ModernShoppingApp(QtWidgets.QWidget):
         if not self.cart:
             QtWidgets.QMessageBox.warning(self, "Cart Empty", "Your cart is empty. Add items to the cart first.")
             return
-        total_price = sum(float(item.split("$")[1]) for item in self.cart)
+
+        total_price = self.total_price
         QtWidgets.QMessageBox.information(
             self,
             "Checkout",
@@ -175,6 +218,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
         )
         self.cart_list.clear()
         self.cart.clear()
+        self.update_total_price(-self.total_price)  # Reset total price
 
     def toggle_theme(self):
         """Toggle between light and dark themes."""
@@ -268,3 +312,8 @@ class ModernShoppingApp(QtWidgets.QWidget):
         except Exception as e:
             print(f"Failed to fetch image: {e}")
         return None
+    
+    def update_total_price(self, price_change):
+        """Update the total price of the cart."""
+        self.total_price += price_change
+        self.total_price_label.setText(f"Total: ${self.total_price:.2f}")
