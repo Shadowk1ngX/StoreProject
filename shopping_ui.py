@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 import FirebaseScript
 import requests
+import authentication
 
 class ModernShoppingApp(QtWidgets.QWidget):
     def __init__(self):
@@ -164,7 +165,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
         dialog_layout = QtWidgets.QVBoxLayout(dialog)
 
         # Username and Password Fields
-        username_label = QtWidgets.QLabel("Username:")
+        username_label = QtWidgets.QLabel("Email:")
         username_field = QtWidgets.QLineEdit()
         password_label = QtWidgets.QLabel("Password:")
         password_field = QtWidgets.QLineEdit()
@@ -175,6 +176,8 @@ class ModernShoppingApp(QtWidgets.QWidget):
         signup_button = QtWidgets.QPushButton("Sign Up")
         close_button = QtWidgets.QPushButton("Close")
         close_button.clicked.connect(dialog.close)
+        login_button.clicked.connect(lambda: self.login(username_field.text(), password_field.text(), dialog))
+        signup_button.clicked.connect(lambda: self.signup(username_field.text(), password_field.text(), dialog))
 
         # Add widgets to the dialog layout
         dialog_layout.addWidget(username_label)
@@ -187,6 +190,14 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
         # Show the dialog
         dialog.exec_()
+
+
+    def login(self, username, password, dialog):
+        authentication.login(username,password)
+        
+
+    def signup(self, username, password, dialog):
+        print("Sign up")
 
     def add_to_cart(self):
         """Add the selected item to the cart."""

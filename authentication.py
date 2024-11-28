@@ -46,30 +46,36 @@ def signup():
             print("Error during signup:", error_message)
 
 
-def login():
+def login(email, password):
     """Login an existing user."""
-    print("\n--- Login ---")
-    email = input("Enter Email: ").strip()
-    password = input("Enter Password: ").strip()
+#    print("\n--- Login ---")
+#    email = input("Enter Email: ").strip()
+#    password = input("Enter Password: ").strip()
+    email = email.strip()
+    password = password.strip()
 
     if not is_valid_email(email):
         print("Invalid email format. Please try again.")
-        return login()
+        return
+#        return login()
 
     try:
         user = auth.sign_in_with_email_and_password(email, password)
         print(f"Login successful! Welcome, {email}")
-        main_menu(user)  # Proceed to main menu
+#        main_menu(user)  # Proceed to main menu
     except Exception as e:
-        error_message = str(e)
-        if "EMAIL_NOT_FOUND" in error_message:
-            print("Email not registered. Please sign up first.")
-        elif "INVALID_PASSWORD" in error_message:
-            print("Incorrect password.")
-            reset = input("Forgot your password? [Yes/No]: ").strip().lower()
-            if reset == "yes":
-                reset_password()
+        error_str  = str(e)
+        json_start = error_str .find("{") #Get start of json return
+        json_data = json.loads(error_str [json_start:]) #convert and load data
+        error_message = json_data.get("error", {}).get("message", "Unknown error") #Grab the message section of error json
+
+        if "INVALID_LOGIN_CREDENTIALS" in error_message:
+            print("Either Email or Password is incorrect. Please try again.")
+ #           reset = input("Forgot your password? [Yes/No]: ").strip().lower()
+ #           if reset == "yes":
+ #               reset_password()
         else:
+            print(e)
             print("Error during login:", error_message)
 
 
@@ -154,20 +160,20 @@ def main_menu(user):
 
 
 # Main Program Flow
-def main():
-    print("Welcome to the Membership Portal!")
-    while True:
-        ans = input("Are you a new user? [Yes/No]: ").strip().lower()
-        if ans == "yes":
-            signup()
-            break
-        elif ans == "no":
-            login()
-            break
-        else:
-            print("Invalid input. Please enter 'Yes' or 'No'.")
+#def main():
+#    print("Welcome to the Membership Portal!")
+#    while True:
+#        ans = input("Are you a new user? [Yes/No]: ").strip().lower()
+#        if ans == "yes":
+#            signup()
+#            break
+#        elif ans == "no":
+#            login()
+#            break
+#        else:
+#            print("Invalid input. Please enter 'Yes' or 'No'.")
 
 
 # Start the Program
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()
