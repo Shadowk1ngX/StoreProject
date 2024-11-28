@@ -1,6 +1,7 @@
 import pyrebase
 import re
 import json
+import requests
 
 # Firebase configuration (Dont upload keys online or others can acsess our databases) Moved to offline file
 # Load Firebase configuration from a JSON file
@@ -56,12 +57,15 @@ def login(email, password):
 
     if not is_valid_email(email):
         print("Invalid email format. Please try again.")
-        return
+        message = "Invalid email format. Please try again."
+        return False, message
 #        return login()
 
     try:
         user = auth.sign_in_with_email_and_password(email, password)
         print(f"Login successful! Welcome, {email}")
+        message = f"Login successful! Welcome, {email}"
+        return True, message
 #        main_menu(user)  # Proceed to main menu
     except Exception as e:
         error_str  = str(e)
@@ -70,7 +74,9 @@ def login(email, password):
         error_message = json_data.get("error", {}).get("message", "Unknown error") #Grab the message section of error json
 
         if "INVALID_LOGIN_CREDENTIALS" in error_message:
+            message = "Either Email or Password is incorrect. Please try again."
             print("Either Email or Password is incorrect. Please try again.")
+            return False, message
  #           reset = input("Forgot your password? [Yes/No]: ").strip().lower()
  #           if reset == "yes":
  #               reset_password()

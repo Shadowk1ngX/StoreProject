@@ -193,7 +193,8 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
 
     def login(self, username, password, dialog):
-        authentication.login(username,password)
+        successful, message = authentication.login(username, password)
+        print(f"Attempt returned: {successful}.\n Message: {message}")
         
 
     def signup(self, username, password, dialog):
