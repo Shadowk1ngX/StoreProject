@@ -165,25 +165,33 @@ class ModernShoppingApp(QtWidgets.QWidget):
         dialog_layout = QtWidgets.QVBoxLayout(dialog)
 
         # Username and Password Fields
-        username_label = QtWidgets.QLabel("Email:")
-        username_field = QtWidgets.QLineEdit()
-        password_label = QtWidgets.QLabel("Password:")
-        password_field = QtWidgets.QLineEdit()
-        password_field.setEchoMode(QtWidgets.QLineEdit.Password)
+        dialog.username_label = QtWidgets.QLabel("Email:")
+        dialog.username_field = QtWidgets.QLineEdit()
+        dialog.password_label = QtWidgets.QLabel("Password:")
+        dialog.password_field = QtWidgets.QLineEdit()
+        dialog.password_field.setEchoMode(QtWidgets.QLineEdit.Password)
+
+        # Error Message Label
+        dialog.error_message_label = QtWidgets.QLabel("")
+        dialog.error_message_label.setStyleSheet("color: red;")  # Red text for errors
+        dialog.error_message_label.setAlignment(QtCore.Qt.AlignCenter)
 
         # Buttons
         login_button = QtWidgets.QPushButton("Login")
         signup_button = QtWidgets.QPushButton("Sign Up")
         close_button = QtWidgets.QPushButton("Close")
+
+        #Button actions
         close_button.clicked.connect(dialog.close)
-        login_button.clicked.connect(lambda: self.login(username_field.text(), password_field.text(), dialog))
-        signup_button.clicked.connect(lambda: self.signup(username_field.text(), password_field.text(), dialog))
+        login_button.clicked.connect(lambda: self.login(dialog.username_field.text(), dialog.password_field.text(), dialog))
+        signup_button.clicked.connect(lambda: self.signup(dialog.username_field.text(), dialog.password_field.text(), dialog))
 
         # Add widgets to the dialog layout
-        dialog_layout.addWidget(username_label)
-        dialog_layout.addWidget(username_field)
-        dialog_layout.addWidget(password_label)
-        dialog_layout.addWidget(password_field)
+        dialog_layout.addWidget(dialog.username_label)
+        dialog_layout.addWidget(dialog.username_field)
+        dialog_layout.addWidget(dialog.password_label)
+        dialog_layout.addWidget(dialog.password_field)
+        dialog_layout.addWidget(dialog.error_message_label)
         dialog_layout.addWidget(login_button)
         dialog_layout.addWidget(signup_button)
         dialog_layout.addWidget(close_button)
@@ -194,7 +202,19 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
     def login(self, username, password, dialog):
         successful, message = authentication.login(username, password)
-        print(f"Attempt returned: {successful}.\n Message: {message}")
+        print(f"Attempt returned: {successful}.\nMessage: {message}")
+        if successful:
+            QtWidgets.QMessageBox.information(self, "Login Successful", "Welcome back!")
+        else:
+            error_message_label = dialog.error_message_label
+            username_field = dialog.username_field
+            password_field = dialog.password_field
+            
+            error_message_label.setText(message)
+            username_field.setStyleSheet("border: 1px solid red;")  # Highlight field in red
+            password_field.setStyleSheet("border: 1px solid red;")
+        
+        
         
 
     def signup(self, username, password, dialog):
