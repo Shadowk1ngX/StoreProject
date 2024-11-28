@@ -1,17 +1,8 @@
 import pyrebase
 import re
 
-# Firebase configuration
-firebaseConfig = {
-    'apiKey': "AIzaSyARRGwaVVWQhI9OOseqf1vn_ZYRFl8EDHA",
-    'authDomain': "storeproject-123cd.firebaseapp.com",
-    'databaseURL': "https://storeproject-123cd-default-rtdb.firebaseio.com",
-    'projectId': "storeproject-123cd",
-    'storageBucket': "storeproject-123cd.firebasestorage.app",
-    'messagingSenderId': "444334516644",
-    'appId': "1:444334516644:web:087b22b900626684113931",
-    'measurementId': "G-NHX4PDKTJL"
-}
+# Firebase configuration (Dont upload keys online or others can acsess our databases) Moved to offline file
+firebaseConfig = "AuthKey.json"
 
 # Initialize Firebase
 firebase = pyrebase.initialize_app(firebaseConfig)
