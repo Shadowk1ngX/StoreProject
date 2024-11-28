@@ -1,8 +1,11 @@
 import pyrebase
 import re
+import json
 
 # Firebase configuration (Dont upload keys online or others can acsess our databases) Moved to offline file
-firebaseConfig = "AuthKey.json"
+# Load Firebase configuration from a JSON file
+with open("AuthKey.json", "r") as file:
+    firebaseConfig = json.load(file)
 
 # Initialize Firebase
 firebase = pyrebase.initialize_app(firebaseConfig)
