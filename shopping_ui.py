@@ -205,6 +205,8 @@ class ModernShoppingApp(QtWidgets.QWidget):
         print(f"Attempt returned: {successful}.\nMessage: {message}")
         if successful:
             QtWidgets.QMessageBox.information(self, "Login Successful", "Welcome back!")
+            dialog.close()
+            self.update_header_for_logged_in_user(username)
         else:
             error_message_label = dialog.error_message_label
             username_field = dialog.username_field
@@ -219,6 +221,17 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
     def signup(self, username, password, dialog):
         print("Sign up")
+
+    def update_header_for_logged_in_user(self, user_email):
+        """Update the header to show the user's email after login."""
+        # Hide the login button
+        self.login_button.hide()
+    
+        # Display the user's email
+        self.user_email_label = QtWidgets.QLabel(f"Logged in as: {user_email}")
+        self.user_email_label.setStyleSheet("font-size: 14px; color: #007bff; margin: 5px;")
+        self.header_layout.addWidget(self.user_email_label)
+
 
     def add_to_cart(self):
         """Add the selected item to the cart."""
