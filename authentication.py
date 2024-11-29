@@ -65,7 +65,7 @@ def login(email, password):
         user = auth.sign_in_with_email_and_password(email, password)
         print(f"Login successful! Welcome, {email}")
         message = f"Login successful! Welcome, {email}"
-        return True, message
+        return True, message , user
 #        main_menu(user)  # Proceed to main menu
     except Exception as e:
         error_str  = str(e)
@@ -106,6 +106,8 @@ def logout():
     print("\nLogging out...")
     print("You have been logged out successfully.")
 
+def get_user_account_info(user):
+    return auth.get_account_info(user['idToken'])
 
 def update_account(user):
     """Update a user's email or password."""
@@ -121,6 +123,43 @@ def update_account(user):
             auth.update_user_password(user['idToken'], new_password)
             print("Password updated successfully.")
         if not new_email and not new_password:
+            print("No changes made.")
+    except Exception as e:
+        print("Error during account update:", str(e))
+
+def update_display_name(user, new_display_name):
+    try:
+        if new_display_name:
+            auth.update_profile(user["idToken"], new_display_name)
+            #auth.update_user_email(user['idToken'], new_email)
+            print(f"Display Name updated to {new_display_name}.")
+            
+        if not new_display_name:
+            print("No changes made.")
+    except Exception as e:
+        print("Error during account update:", str(e))
+
+
+def update_email(user, new_email):
+    """Update a user's email"""
+    try:
+        if new_email and is_valid_email(new_email):
+            auth.update_profile(user["idToken"])
+            #auth.update_user_email(user['idToken'], new_email)
+            print(f"Email updated to {new_email}.")
+        
+        if not new_email:
+            print("No changes made.")
+    except Exception as e:
+        print("Error during account update:", str(e))
+
+def update_password(user, new_password):
+    """Update the user's password."""
+    try:
+        if new_password and len(new_password) >= 6:
+            auth.update_user_password(user['idToken'], new_password)
+            print("Password updated successfully.")
+        if not new_password:
             print("No changes made.")
     except Exception as e:
         print("Error during account update:", str(e))
