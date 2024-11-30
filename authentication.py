@@ -46,9 +46,11 @@ def signup(email, password):
         print(f"Signup successful! Welcome, {email}")
         #login()  # Prompt user to log in after signing up
     except Exception as e:
-        error_message = str(e)
+        error_str = str(e)
+        error_message = get_error_message(error_str)
         if "EMAIL_EXISTS" in error_message:
             message = "Email already exists. Please login instead."
+        return False, message
         else:
             print(e)
             print("Error during signup:", error_message)
