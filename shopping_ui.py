@@ -227,7 +227,13 @@ class ModernShoppingApp(QtWidgets.QWidget):
         if successful:
             ...
         else:
-            ...
+            error_message_label = dialog.error_message_label
+            username_field = dialog.username_field
+            password_field = dialog.password_field
+            
+            error_message_label.setText(message)
+            username_field.setStyleSheet("border: 1px solid red;")  # Highlight field in red
+            password_field.setStyleSheet("border: 1px solid red;")
 
 
 
