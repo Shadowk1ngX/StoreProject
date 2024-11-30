@@ -21,24 +21,23 @@ def is_valid_email(email):
 
 
 # Core Functions
-def signup(username, password):
+def signup(email, password):
     """Sign up a new user."""
-    print("\n--- Sign Up ---")
-    email = input("Enter Email: ").strip()
-    password = input("Enter Password: ").strip()
-
+    email = email.strip()
+    password = password.strip()
+    
     if not is_valid_email(email):
         print("Invalid email format. Please try again.")
-        return signup()
+        #return signup()
 
     if len(password) < 6:
         print("Password must be at least 6 characters long. Please try again.")
-        return signup()
+        #return signup()
 
     try:
         auth.create_user_with_email_and_password(email, password)
         print(f"Signup successful! Welcome, {email}")
-        login()  # Prompt user to log in after signing up
+        #login()  # Prompt user to log in after signing up
     except Exception as e:
         error_message = str(e)
         if "EMAIL_EXISTS" in error_message:
@@ -49,9 +48,6 @@ def signup(username, password):
 
 def login(email, password):
     """Login an existing user."""
-#    print("\n--- Login ---")
-#    email = input("Enter Email: ").strip()
-#    password = input("Enter Password: ").strip()
     email = email.strip()
     password = password.strip()
 
