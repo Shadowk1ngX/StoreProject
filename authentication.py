@@ -29,6 +29,7 @@ def signup(email, password):
     if not is_valid_email(email):
         print("Invalid email format. Please try again.")
         #return signup()
+        return False, message
 
     if len(password) < 6:
         print("Password must be at least 6 characters long. Please try again.")
@@ -44,6 +45,7 @@ def signup(email, password):
             print("Email already exists. Please login instead.")
         else:
             print("Error during signup:", error_message)
+    
 
 
 def login(email, password):
