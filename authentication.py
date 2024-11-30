@@ -12,7 +12,6 @@ with open("AuthKey.json", "r") as file:
 firebase = pyrebase.initialize_app(firebaseConfig)
 auth = firebase.auth()
 
-
 # Helper Functions
 def is_valid_email(email):
     """Check if the provided email is valid."""
