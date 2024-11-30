@@ -21,7 +21,7 @@ def is_valid_email(email):
 
 
 # Core Functions
-def signup():
+def signup(username, password):
     """Sign up a new user."""
     print("\n--- Sign Up ---")
     email = input("Enter Email: ").strip()
