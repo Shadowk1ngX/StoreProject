@@ -20,7 +20,7 @@ def is_valid_email(email):
     return re.match(regex, email)
 
 def get_error_message(error_str):
-    json_start = error_str .find("{") #Get start of json return
+    json_start = error_str.find("{") #Get start of json return
     json_data = json.loads(error_str [json_start:]) #convert and load data
     error_message = json_data.get("error", {}).get("message", "Unknown error") #Grab the message section of error json
     return error_message
@@ -44,11 +44,14 @@ def signup(email, password):
     try:
         user = auth.create_user_with_email_and_password(email, password)
         print(f"Signup successful! Welcome, {email}")
+        message = f"Signup successful! Welcome, {email}"
         return True, message, user
         #login()  # Prompt user to log in after signing up
     except Exception as e:
         error_str = str(e)
+        print("TEST")
         error_message = get_error_message(error_str)
+        print("ERROR MESSAGE")
         if "EMAIL_EXISTS" in error_message:
             message = "Email already exists. Please login instead."
             return False, message, None

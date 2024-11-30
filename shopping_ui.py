@@ -222,10 +222,13 @@ class ModernShoppingApp(QtWidgets.QWidget):
     
 
     def signup(self, email, password, dialog):
-        successful, message = authentication.signup(email, password)
+        successful, message, user = authentication.signup(email, password)
         print(f"Signup attempt returned:")
         if successful:
-            ...
+            QtWidgets.QMessageBox.information(self, "Sig up Successful", "Welcome!")
+            dialog.close()
+            self.user = user
+            self.update_header_for_logged_in_user(email)
         else:
             error_message_label = dialog.error_message_label
             username_field = dialog.username_field
