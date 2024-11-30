@@ -32,7 +32,7 @@ def signup(email, password):
     password = password.strip()
     
     if not is_valid_email(email):
-        print("Invalid email format. Please try again.")
+        message = "Invalid email format. Please try again."
         #return signup()
         return False, message
 
