@@ -19,6 +19,11 @@ def is_valid_email(email):
     regex = r'^\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     return re.match(regex, email)
 
+def get_error_message(error_str):
+    json_start = error_str .find("{") #Get start of json return
+    json_data = json.loads(error_str [json_start:]) #convert and load data
+    error_message = json_data.get("error", {}).get("message", "Unknown error") #Grab the message section of error json
+    return error_message
 
 # Core Functions
 def signup(email, password):
@@ -65,9 +70,7 @@ def login(email, password):
 #        main_menu(user)  # Proceed to main menu
     except Exception as e:
         error_str  = str(e)
-        json_start = error_str .find("{") #Get start of json return
-        json_data = json.loads(error_str [json_start:]) #convert and load data
-        error_message = json_data.get("error", {}).get("message", "Unknown error") #Grab the message section of error json
+        error_message= get_error_message(error_str)
 
         if "INVALID_LOGIN_CREDENTIALS" in error_message:
             message = "Either Email or Password is incorrect. Please try again."
@@ -79,6 +82,9 @@ def login(email, password):
         else:
             print(e)
             print("Error during login:", error_message)
+
+
+
 
 
 def reset_password():
