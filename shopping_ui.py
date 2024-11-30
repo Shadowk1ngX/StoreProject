@@ -224,7 +224,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
         successful, message, user = authentication.signup(email, password)
         print(f"Signup attempt returned:")
         if successful:
-            QtWidgets.QMessageBox.information(self, "Sig up Successful", "Welcome!")
+            QtWidgets.QMessageBox.information(self,"Success!", message)
             dialog.close()
             self.user = user
             self.update_header_for_logged_in_user(email)
@@ -379,21 +379,23 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
     def confirm_logout(self, dialog):
         """Open a confirmation dialog to log out."""
-        reply = QtWidgets.QMessageBox.question(
+        confirmation = QtWidgets.QMessageBox.question(
             self,
             "Confirm Logout",
             "Are you sure you want to log out?",
             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
         )
 
-        if reply == QtWidgets.QMessageBox.Yes:
+        if confirmation == QtWidgets.QMessageBox.Yes:
             # Perform log-out actions
             print("Logging out...")
             self.user = None  # Clear the current user
             self.reset_ui_to_logged_out_state()
-            dialog.close()
+            if dialog:
+                dialog.close()  # Close the profile dialog
         else:
             print("Logout canceled.")
+
 
     def add_to_cart(self):
         """Add the selected item to the cart."""
@@ -455,6 +457,31 @@ class ModernShoppingApp(QtWidgets.QWidget):
         # Update the total price
         self.update_total_price(-item_price)
 
+    def reset_ui_to_logged_out_state(self):
+        """Reset the UI to the logged-out state."""
+        # Clear the user info and hide the user-specific widgets
+        self.user = None
+
+        # Remove the user email label if it exists
+        if hasattr(self, "user_email_label") and self.user_email_label:
+            self.header_layout.removeWidget(self.user_email_label)
+            self.user_email_label.deleteLater()
+            self.user_email_label = None
+
+        # Remove the profile button if it exists
+        if hasattr(self, "profile_button") and self.profile_button:
+            self.header_layout.removeWidget(self.profile_button)
+            self.profile_button.deleteLater()
+            self.profile_button = None
+
+        # Remove the logout button if it exists
+        if hasattr(self, "logout_button") and self.logout_button:
+            self.header_layout.removeWidget(self.logout_button)
+            self.logout_button.deleteLater()
+            self.logout_button = None
+
+        # Show the login button again
+        self.login_button.show()
 
     def checkout(self):
         """Handle checkout process."""
