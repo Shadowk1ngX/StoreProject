@@ -58,7 +58,7 @@ def login(email, password):
     if not is_valid_email(email):
         print("Invalid email format. Please try again.")
         message = "Invalid email format. Please try again."
-        return False, message
+        return False, message, None
 #        return login()
 
     try:
@@ -76,7 +76,7 @@ def login(email, password):
         if "INVALID_LOGIN_CREDENTIALS" in error_message:
             message = "Either Email or Password is incorrect. Please try again."
             print("Either Email or Password is incorrect. Please try again.")
-            return False, message
+            return False, message, None
  #           reset = input("Forgot your password? [Yes/No]: ").strip().lower()
  #           if reset == "yes":
  #               reset_password()
