@@ -37,8 +37,9 @@ def signup(email, password):
         return False, message
 
     if len(password) < 6:
-        print("Password must be at least 6 characters long. Please try again.")
+        message = "Password must be at least 6 characters long. Please try again."
         #return signup()
+        return False, message
 
     try:
         auth.create_user_with_email_and_password(email, password)
