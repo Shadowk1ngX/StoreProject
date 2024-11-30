@@ -34,17 +34,18 @@ def signup(email, password):
     if not is_valid_email(email):
         message = "Invalid email format. Please try again."
         #return signup()
-        return False, message
+        return False, message, None
 
     if len(password) < 6:
         message = "Password must be at least 6 characters long. Please try again."
         #return signup()
-        return False, message
+        return False, message, None
 
     try:
-        auth.create_user_with_email_and_password(email, password)
+        user = auth.create_user_with_email_and_password(email, password)
         print(f"Signup successful! Welcome, {email}")
-
+        return True, message, user
+        #login()  # Prompt user to log in after signing up
     except Exception as e:
         error_str = str(e)
         error_message = get_error_message(error_str)
@@ -65,12 +66,13 @@ def login(email, password):
     if not is_valid_email(email):
         message = "Invalid email format. Please try again."
         return False, message, None
+#        return login()
 
     try:
         user = auth.sign_in_with_email_and_password(email, password)
         print(f"Login successful! Welcome, {email}")
         message = f"Login successful! Welcome, {email}"
-        return True, message , user
+        return True, message, user
     except Exception as e:
         error_str  = str(e)
         error_message= get_error_message(error_str)
@@ -133,6 +135,7 @@ def update_display_name(user, new_display_name):
     try:
         if new_display_name:
             auth.update_profile(user["idToken"], new_display_name)
+            #auth.update_user_email(user['idToken'], new_email)
             print(f"Display Name updated to {new_display_name}.")
             
         if not new_display_name:
@@ -146,6 +149,7 @@ def update_email(user, new_email):
     try:
         if new_email and is_valid_email(new_email):
             auth.update_profile(user["idToken"])
+            #auth.update_user_email(user['idToken'], new_email)
             print(f"Email updated to {new_email}.")
         
         if not new_email:
@@ -202,3 +206,23 @@ def main_menu(user):
             exit()
         else:
             print("Invalid choice. Please try again.")
+
+
+# Main Program Flow
+#def main():
+#    print("Welcome to the Membership Portal!")
+#    while True:
+#        ans = input("Are you a new user? [Yes/No]: ").strip().lower()
+#        if ans == "yes":
+#            signup()
+#            break
+#        elif ans == "no":
+#            login()
+#            break
+#        else:
+#            print("Invalid input. Please enter 'Yes' or 'No'.")
+
+
+# Start the Program
+#if __name__ == "__main__":
+#    main()
