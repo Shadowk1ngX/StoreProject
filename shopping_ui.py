@@ -222,7 +222,9 @@ class ModernShoppingApp(QtWidgets.QWidget):
     
 
     def signup(self, username, password, dialog):
-        print("Sign up")
+        succussful, message, user = authentication.signup(username, password)
+        print(f"Signup attempt returned:")
+
 
 
     def show_profile_dialog(self):
