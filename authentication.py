@@ -1,17 +1,12 @@
 import pyrebase
 import re
+import json
+import requests
 
-# Firebase configuration
-firebaseConfig = {
-    'apiKey': "AIzaSyARRGwaVVWQhI9OOseqf1vn_ZYRFl8EDHA",
-    'authDomain': "storeproject-123cd.firebaseapp.com",
-    'databaseURL': "https://storeproject-123cd-default-rtdb.firebaseio.com",
-    'projectId': "storeproject-123cd",
-    'storageBucket': "storeproject-123cd.firebasestorage.app",
-    'messagingSenderId': "444334516644",
-    'appId': "1:444334516644:web:087b22b900626684113931",
-    'measurementId': "G-NHX4PDKTJL"
-}
+# Firebase configuration (Dont upload keys online or others can acsess our databases) Moved to offline file
+# Load Firebase configuration from a JSON file
+with open("AuthKey.json", "r") as file:
+    firebaseConfig = json.load(file)
 
 # Initialize Firebase
 firebase = pyrebase.initialize_app(firebaseConfig)
@@ -52,30 +47,41 @@ def signup():
             print("Error during signup:", error_message)
 
 
-def login():
+def login(email, password):
     """Login an existing user."""
-    print("\n--- Login ---")
-    email = input("Enter Email: ").strip()
-    password = input("Enter Password: ").strip()
+#    print("\n--- Login ---")
+#    email = input("Enter Email: ").strip()
+#    password = input("Enter Password: ").strip()
+    email = email.strip()
+    password = password.strip()
 
     if not is_valid_email(email):
         print("Invalid email format. Please try again.")
-        return login()
+        message = "Invalid email format. Please try again."
+        return False, message
+#        return login()
 
     try:
         user = auth.sign_in_with_email_and_password(email, password)
         print(f"Login successful! Welcome, {email}")
-        main_menu(user)  # Proceed to main menu
+        message = f"Login successful! Welcome, {email}"
+        return True, message , user
+#        main_menu(user)  # Proceed to main menu
     except Exception as e:
-        error_message = str(e)
-        if "EMAIL_NOT_FOUND" in error_message:
-            print("Email not registered. Please sign up first.")
-        elif "INVALID_PASSWORD" in error_message:
-            print("Incorrect password.")
-            reset = input("Forgot your password? [Yes/No]: ").strip().lower()
-            if reset == "yes":
-                reset_password()
+        error_str  = str(e)
+        json_start = error_str .find("{") #Get start of json return
+        json_data = json.loads(error_str [json_start:]) #convert and load data
+        error_message = json_data.get("error", {}).get("message", "Unknown error") #Grab the message section of error json
+
+        if "INVALID_LOGIN_CREDENTIALS" in error_message:
+            message = "Either Email or Password is incorrect. Please try again."
+            print("Either Email or Password is incorrect. Please try again.")
+            return False, message
+ #           reset = input("Forgot your password? [Yes/No]: ").strip().lower()
+ #           if reset == "yes":
+ #               reset_password()
         else:
+            print(e)
             print("Error during login:", error_message)
 
 
@@ -100,6 +106,8 @@ def logout():
     print("\nLogging out...")
     print("You have been logged out successfully.")
 
+def get_user_account_info(user):
+    return auth.get_account_info(user['idToken'])
 
 def update_account(user):
     """Update a user's email or password."""
@@ -115,6 +123,43 @@ def update_account(user):
             auth.update_user_password(user['idToken'], new_password)
             print("Password updated successfully.")
         if not new_email and not new_password:
+            print("No changes made.")
+    except Exception as e:
+        print("Error during account update:", str(e))
+
+def update_display_name(user, new_display_name):
+    try:
+        if new_display_name:
+            auth.update_profile(user["idToken"], new_display_name)
+            #auth.update_user_email(user['idToken'], new_email)
+            print(f"Display Name updated to {new_display_name}.")
+            
+        if not new_display_name:
+            print("No changes made.")
+    except Exception as e:
+        print("Error during account update:", str(e))
+
+
+def update_email(user, new_email):
+    """Update a user's email"""
+    try:
+        if new_email and is_valid_email(new_email):
+            auth.update_profile(user["idToken"])
+            #auth.update_user_email(user['idToken'], new_email)
+            print(f"Email updated to {new_email}.")
+        
+        if not new_email:
+            print("No changes made.")
+    except Exception as e:
+        print("Error during account update:", str(e))
+
+def update_password(user, new_password):
+    """Update the user's password."""
+    try:
+        if new_password and len(new_password) >= 6:
+            auth.update_user_password(user['idToken'], new_password)
+            print("Password updated successfully.")
+        if not new_password:
             print("No changes made.")
     except Exception as e:
         print("Error during account update:", str(e))
@@ -160,20 +205,20 @@ def main_menu(user):
 
 
 # Main Program Flow
-def main():
-    print("Welcome to the Membership Portal!")
-    while True:
-        ans = input("Are you a new user? [Yes/No]: ").strip().lower()
-        if ans == "yes":
-            signup()
-            break
-        elif ans == "no":
-            login()
-            break
-        else:
-            print("Invalid input. Please enter 'Yes' or 'No'.")
+#def main():
+#    print("Welcome to the Membership Portal!")
+#    while True:
+#        ans = input("Are you a new user? [Yes/No]: ").strip().lower()
+#        if ans == "yes":
+#            signup()
+#            break
+#        elif ans == "no":
+#            login()
+#            break
+#        else:
+#            print("Invalid input. Please enter 'Yes' or 'No'.")
 
 
 # Start the Program
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()

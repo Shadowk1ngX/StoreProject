@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 import FirebaseScript
 import requests
+import authentication
 
 class ModernShoppingApp(QtWidgets.QWidget):
     def __init__(self):
@@ -11,6 +12,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.resize(1000, 700)
         self.current_theme = "dark"  # Default theme
         self.apply_dark_theme()
+        self.user = None
 
         # Initialize the cart as an empty list
         self.cart = []
@@ -164,29 +166,220 @@ class ModernShoppingApp(QtWidgets.QWidget):
         dialog_layout = QtWidgets.QVBoxLayout(dialog)
 
         # Username and Password Fields
-        username_label = QtWidgets.QLabel("Username:")
-        username_field = QtWidgets.QLineEdit()
-        password_label = QtWidgets.QLabel("Password:")
-        password_field = QtWidgets.QLineEdit()
-        password_field.setEchoMode(QtWidgets.QLineEdit.Password)
+        dialog.username_label = QtWidgets.QLabel("Email:")
+        dialog.username_field = QtWidgets.QLineEdit()
+        dialog.password_label = QtWidgets.QLabel("Password:")
+        dialog.password_field = QtWidgets.QLineEdit()
+        dialog.password_field.setEchoMode(QtWidgets.QLineEdit.Password)
+
+        # Error Message Label
+        dialog.error_message_label = QtWidgets.QLabel("")
+        dialog.error_message_label.setStyleSheet("color: red;")  # Red text for errors
+        dialog.error_message_label.setAlignment(QtCore.Qt.AlignCenter)
 
         # Buttons
         login_button = QtWidgets.QPushButton("Login")
         signup_button = QtWidgets.QPushButton("Sign Up")
         close_button = QtWidgets.QPushButton("Close")
+
+        #Button actions
         close_button.clicked.connect(dialog.close)
+        login_button.clicked.connect(lambda: self.login(dialog.username_field.text(), dialog.password_field.text(), dialog))
+        signup_button.clicked.connect(lambda: self.signup(dialog.username_field.text(), dialog.password_field.text(), dialog))
 
         # Add widgets to the dialog layout
-        dialog_layout.addWidget(username_label)
-        dialog_layout.addWidget(username_field)
-        dialog_layout.addWidget(password_label)
-        dialog_layout.addWidget(password_field)
+        dialog_layout.addWidget(dialog.username_label)
+        dialog_layout.addWidget(dialog.username_field)
+        dialog_layout.addWidget(dialog.password_label)
+        dialog_layout.addWidget(dialog.password_field)
+        dialog_layout.addWidget(dialog.error_message_label)
         dialog_layout.addWidget(login_button)
         dialog_layout.addWidget(signup_button)
         dialog_layout.addWidget(close_button)
 
         # Show the dialog
         dialog.exec_()
+
+
+    def login(self, username, password, dialog):
+        successful, message, user = authentication.login(username, password)
+        print(f"Attempt returned: {successful}.\nMessage: {message}")
+        if successful:
+            QtWidgets.QMessageBox.information(self, "Login Successful", "Welcome back!")
+            dialog.close()
+            self.user = user
+            self.update_header_for_logged_in_user(username)
+            
+        else:
+            error_message_label = dialog.error_message_label
+            username_field = dialog.username_field
+            password_field = dialog.password_field
+            
+            error_message_label.setText(message)
+            username_field.setStyleSheet("border: 1px solid red;")  # Highlight field in red
+            password_field.setStyleSheet("border: 1px solid red;")
+        
+    
+
+    def signup(self, username, password, dialog):
+        print("Sign up")
+
+
+    def show_profile_dialog(self):
+        """Show a dialog for editing the user's profile."""
+        dialog = QtWidgets.QDialog(self)
+        dialog.setWindowTitle("Edit Profile")
+        dialog_layout = QtWidgets.QVBoxLayout(dialog)
+
+        # Username Field
+        username_label = QtWidgets.QLabel("New Username (Optional):")
+        username_field = QtWidgets.QLineEdit()
+
+        # Email Field
+        email_label = QtWidgets.QLabel("New Email (Optional):")
+        email_field = QtWidgets.QLineEdit()
+
+        # Password Field
+        password_label = QtWidgets.QLabel("New Password (Optional):")
+        password_field = QtWidgets.QLineEdit()
+        password_field.setEchoMode(QtWidgets.QLineEdit.Password)
+
+        # Confirm Password Field
+        confirm_password_label = QtWidgets.QLabel("Confirm Password:")
+        confirm_password_field = QtWidgets.QLineEdit()
+        confirm_password_field.setEchoMode(QtWidgets.QLineEdit.Password)
+
+        # Buttons
+        save_button = QtWidgets.QPushButton("Save Changes")
+        cancel_button = QtWidgets.QPushButton("Cancel")
+        cancel_button.clicked.connect(dialog.close)
+        logout_button = QtWidgets.QPushButton("Log Out")
+        
+        save_button.clicked.connect(lambda: self.update_profile(
+            dialog, 
+            username_field.text(), 
+            email_field.text(), 
+            password_field.text(), 
+            confirm_password_field.text()
+        ))
+        cancel_button.clicked.connect(dialog.close)
+        logout_button.clicked.connect(lambda: self.confirm_logout(dialog))
+
+        # Add widgets to the dialog layout
+        dialog_layout.addWidget(username_label)
+        dialog_layout.addWidget(username_field)
+        dialog_layout.addWidget(email_label)
+        dialog_layout.addWidget(email_field)
+        dialog_layout.addWidget(password_label)
+        dialog_layout.addWidget(password_field)
+        dialog_layout.addWidget(confirm_password_label)
+        dialog_layout.addWidget(confirm_password_field)
+        dialog_layout.addWidget(save_button)
+        dialog_layout.addWidget(logout_button)
+        dialog_layout.addWidget(cancel_button)
+
+        dialog.exec_()
+    
+    def get_display_name(self):
+        NewInfo = authentication.get_user_account_info(self.user)
+        try:
+            print("Get Display name")
+            if 'users' in NewInfo and len(NewInfo['users']) > 0:
+                print(f"Found: {NewInfo['users'][0].get('displayName', '')}")
+                return NewInfo['users'][0].get('displayName', "")
+            else:
+                print("Error: Unable to find displayName in the response.")
+                return ""
+        except:
+            print("Failed")
+            ...
+
+        
+
+    def update_header_for_logged_in_user(self, user_email):
+        """Update the header to show the user's email and add a profile button after login."""
+        # Hide the login button
+        self.login_button.hide()
+
+        # Display the user's email if no display name
+        DisplayName = self.get_display_name()
+        if DisplayName:
+            self.user_email_label = QtWidgets.QLabel(f"Logged in as: {DisplayName}")
+        else:
+            self.user_email_label = QtWidgets.QLabel(f"Logged in as: {user_email}")
+        
+        self.user_email_label.setStyleSheet("font-size: 14px; color: #007bff; margin: 5px;")
+        self.header_layout.addWidget(self.user_email_label)
+
+        # Create a vertical layout for buttons
+        button_layout = QtWidgets.QVBoxLayout()
+        # Reduce spacing between buttons
+        button_layout.setSpacing(5)  # Set spacing between buttons to 5 pixels (adjust as needed)
+        # Remove extra margins around the layout
+        button_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Add a profile button
+        self.profile_button = QtWidgets.QPushButton("Edit Profile")
+        self.profile_button.setStyleSheet("background-color: #007bff; color: white; padding: 5px 10px; border-radius: 5px;")
+        self.profile_button.clicked.connect(self.show_profile_dialog)
+        button_layout.addWidget(self.profile_button)
+
+        # Add the Log Out button
+        self.logout_button = QtWidgets.QPushButton("Log Out")
+        self.logout_button.setStyleSheet("background-color: #d9534f; color: white; padding: 5px 10px; border-radius: 5px;")
+        self.logout_button.clicked.connect(self.confirm_logout)
+        button_layout.addWidget(self.logout_button)
+       
+        self.header_layout.addLayout(button_layout)
+
+
+    def update_profile(self, dialog, new_username, new_email, new_password, confirm_password):
+        """Update the user's profile."""
+        if new_password and new_password != confirm_password:
+            QtWidgets.QMessageBox.warning(self, "Error", "Passwords do not match.")
+            return
+        
+        try:
+            # Update username (this may involve your own backend logic)
+            if new_username:
+                print(f"Updating username to: {new_username}")
+                authentication.update_display_name(self.user, new_username)
+                DisplayName = self.get_display_name()      
+                self.user_email_label.setText(f"Logged in as: {DisplayName}")
+
+            # Update email
+            if new_email:
+                print(f"Updating email to: {new_email}")
+                authentication.update_email(self.user, new_email)  # Replace with your logic
+
+            # Update password
+            if new_password:
+                print(f"Updating password.")
+                authentication.update_password(self.user,new_password)  # Replace with your logic
+
+            QtWidgets.QMessageBox.information(self, "Profile Updated", "Your profile has been updated successfully.")
+            dialog.close()
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error", f"Failed to update profile: {str(e)}")
+
+
+    def confirm_logout(self, dialog):
+        """Open a confirmation dialog to log out."""
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirm Logout",
+            "Are you sure you want to log out?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+
+        if reply == QtWidgets.QMessageBox.Yes:
+            # Perform log-out actions
+            print("Logging out...")
+            self.user = None  # Clear the current user
+            self.reset_ui_to_logged_out_state()
+            dialog.close()
+        else:
+            print("Logout canceled.")
 
     def add_to_cart(self):
         """Add the selected item to the cart."""
