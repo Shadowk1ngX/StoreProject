@@ -220,7 +220,6 @@ class ModernShoppingApp(QtWidgets.QWidget):
             password_field.setStyleSheet("border: 1px solid red;")
         
     
-
     def signup(self, email, password, dialog):
         successful, message, user = authentication.signup(email, password)
         print(f"Signup attempt returned:")
