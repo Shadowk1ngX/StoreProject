@@ -48,8 +48,9 @@ def signup(email, password):
     except Exception as e:
         error_message = str(e)
         if "EMAIL_EXISTS" in error_message:
-            print("Email already exists. Please login instead.")
+            message = "Email already exists. Please login instead."
         else:
+            print(e)
             print("Error during signup:", error_message)
     
 
@@ -69,7 +70,6 @@ def login(email, password):
         print(f"Login successful! Welcome, {email}")
         message = f"Login successful! Welcome, {email}"
         return True, message , user
-#        main_menu(user)  # Proceed to main menu
     except Exception as e:
         error_str  = str(e)
         error_message= get_error_message(error_str)
@@ -78,9 +78,6 @@ def login(email, password):
             message = "Either Email or Password is incorrect. Please try again."
             print("Either Email or Password is incorrect. Please try again.")
             return False, message, None
- #           reset = input("Forgot your password? [Yes/No]: ").strip().lower()
- #           if reset == "yes":
- #               reset_password()
         else:
             print(e)
             print("Error during login:", error_message)
