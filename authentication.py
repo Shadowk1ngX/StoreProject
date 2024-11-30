@@ -33,18 +33,16 @@ def signup(email, password):
     
     if not is_valid_email(email):
         message = "Invalid email format. Please try again."
-        #return signup()
         return False, message
 
     if len(password) < 6:
         message = "Password must be at least 6 characters long. Please try again."
-        #return signup()
         return False, message
 
     try:
         auth.create_user_with_email_and_password(email, password)
         print(f"Signup successful! Welcome, {email}")
-
+        return True
     except Exception as e:
         error_str = str(e)
         error_message = get_error_message(error_str)
