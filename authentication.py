@@ -50,7 +50,7 @@ def signup(email, password):
         error_message = get_error_message(error_str)
         if "EMAIL_EXISTS" in error_message:
             message = "Email already exists. Please login instead."
-        return False, message
+            return False, message
         else:
             print(e)
             print("Error during signup:", error_message)
