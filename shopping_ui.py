@@ -1,7 +1,27 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtCore import QThread, pyqtSignal
 import FirebaseScript
 import requests
 import authentication
+
+
+class VerificationThread(QThread):
+    finished = pyqtSignal(bool)  # Signal to indicate verification result
+
+    def __init__(self, user_id_token):
+        super().__init__()
+        self.user_id_token = user_id_token
+
+    def run(self):
+        # Perform the verification check
+        #result = authentication.check_email_verified(self.user_id_token)
+        result = authentication.wait_for_email_verification(self.user_id_token)
+        if not result:
+            ...# handle timeouts or whatever returns false
+        else:
+            self.finished.emit(result)  # Emit the result when done
+
+
 
 class ModernShoppingApp(QtWidgets.QWidget):
     def __init__(self):
@@ -237,8 +257,40 @@ class ModernShoppingApp(QtWidgets.QWidget):
             username_field.setStyleSheet("border: 1px solid red;")  # Highlight field in red
             password_field.setStyleSheet("border: 1px solid red;")
 
+    def verify_email_and_update(self, idToken):
+        authentication.send_verification_email(idToken)
+        
+        dialog = QtWidgets.QDialog(self)
+        dialog.setWindowTitle("Email Verification")
+        dialog.setModal(True)  # Make it a modal dialog (blocks interaction with other windows)
+        dialog.setWindowFlags(dialog.windowFlags() & ~QtCore.Qt.WindowCloseButtonHint)
+        layout = QtWidgets.QVBoxLayout(dialog)
+        message_label = QtWidgets.QLabel("Please check your email for the verification link.")
+        message_label.setAlignment(QtCore.Qt.AlignCenter)
+        message_label.setStyleSheet("font-size: 14px; margin: 10px;")
+        layout.addWidget(message_label)
+        
+        # Waiting Spinner (Optional, for UX improvement)
+        spinner = QtWidgets.QLabel()
+        spinner.setAlignment(QtCore.Qt.AlignCenter)
+        spinner_movie = QtGui.QMovie("assets/loading.gif")  # Use QMovie to load the animated GIF
+        if not spinner_movie.isValid():
+            print("ERROR: Spinner GIF not found or invalid!")
+        else:
+            spinner.setMovie(spinner_movie)  # Set the spinner's movie
+            spinner_movie.start()  # Start the animation
+            layout.addWidget(spinner)
+        # Make sure the window cannot be exited
+        dialog.setWindowModality(QtCore.Qt.ApplicationModal)  # Blocks interaction with the app
+        QtCore.QTimer.singleShot(0, dialog.show)
+        
+        self.verification_thread = VerificationThread(self.user["idToken"])
+        self.verification_thread.finished.connect(lambda is_verified: self.on_verification_finished(dialog, is_verified))
+        self.verification_thread.start()
 
-
+        #Add a succsful verification window
+       
+        
     def show_profile_dialog(self):
         """Show a dialog for editing the user's profile."""
         dialog = QtWidgets.QDialog(self)
@@ -264,6 +316,10 @@ class ModernShoppingApp(QtWidgets.QWidget):
         confirm_password_field.setEchoMode(QtWidgets.QLineEdit.Password)
 
         # Buttons
+        IsVerified = authentication.check_email_verified(self.user["idToken"])
+        if not IsVerified:
+            self.verify_email_button = QtWidgets.QPushButton("Verify Email")
+            self.verify_email_button.clicked.connect(lambda: self.verify_email_and_update(self.user["idToken"]))
         save_button = QtWidgets.QPushButton("Save Changes")
         cancel_button = QtWidgets.QPushButton("Cancel")
         cancel_button.clicked.connect(dialog.close)
@@ -288,6 +344,8 @@ class ModernShoppingApp(QtWidgets.QWidget):
         dialog_layout.addWidget(password_field)
         dialog_layout.addWidget(confirm_password_label)
         dialog_layout.addWidget(confirm_password_field)
+        if not IsVerified:
+            dialog_layout.addWidget(self.verify_email_button)
         dialog_layout.addWidget(save_button)
         dialog_layout.addWidget(logout_button)
         dialog_layout.addWidget(cancel_button)
@@ -308,29 +366,62 @@ class ModernShoppingApp(QtWidgets.QWidget):
             print("Failed")
             ...
 
-        
+    def on_verification_finished(self, window, verified):
+        """Handle the result of the verification."""
+        if verified:
+            self.verified_label.setText("✅ Verified")
+            self.verified_label.setStyleSheet("font-size: 12px; color: green; margin: 0; padding: 0;")
+            self.verify_email_button.deleteLater()
+            self.verify_email_button = None
+        else:
+            self.verified_label.setText("❌ Not Verified")
+            self.verified_label.setStyleSheet("font-size: 12px; color: red; margin: 0; padding: 0;")
+            
+        window.close()
+
+         
+
 
     def update_header_for_logged_in_user(self, user_email):
         """Update the header to show the user's email and add a profile button after login."""
         # Hide the login button
         self.login_button.hide()
 
-        # Display the user's email if no display name
+        # Create a vertical layout for the user info (email and verified)
+        user_info_layout = QtWidgets.QVBoxLayout()
+
+        # Display the user's email or display name
         DisplayName = self.get_display_name()
         if DisplayName:
             self.user_email_label = QtWidgets.QLabel(f"Logged in as: {DisplayName}")
         else:
             self.user_email_label = QtWidgets.QLabel(f"Logged in as: {user_email}")
-        
+
         self.user_email_label.setStyleSheet("font-size: 14px; color: #007bff; margin: 5px;")
-        self.header_layout.addWidget(self.user_email_label)
+        user_info_layout.addWidget(self.user_email_label)
+
+        # Update or create the "Verified" label
+        if hasattr(self, "verified_label") and self.verified_label:
+            if authentication.check_email_verified(self.user["idToken"]):
+                self.verified_label.setText("✅ Verified")
+                self.verified_label.setStyleSheet("font-size: 12px; color: green; margin: 0; padding: 0;")
+            else:
+                self.verified_label.setText("❌ Not Verified")
+                self.verified_label.setStyleSheet("font-size: 12px; color: red; margin: 0; padding: 0;")
+        else:
+            if authentication.check_email_verified(self.user["idToken"]):
+                self.verified_label = QtWidgets.QLabel("✅ Verified")
+                self.verified_label.setStyleSheet("font-size: 12px; color: green; margin: 0; padding: 0;")
+            else:
+                self.verified_label = QtWidgets.QLabel("❌ Not Verified")
+                self.verified_label.setStyleSheet("font-size: 12px; color: red; margin: 0; padding: 0;")
+            user_info_layout.addWidget(self.verified_label)
+
+        # Add the user info layout to the header layout
+        self.header_layout.addLayout(user_info_layout)
 
         # Create a vertical layout for buttons
         button_layout = QtWidgets.QVBoxLayout()
-        # Reduce spacing between buttons
-        button_layout.setSpacing(5)  # Set spacing between buttons to 5 pixels (adjust as needed)
-        # Remove extra margins around the layout
-        button_layout.setContentsMargins(0, 0, 0, 0)
 
         # Add a profile button
         self.profile_button = QtWidgets.QPushButton("Edit Profile")
@@ -343,8 +434,11 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.logout_button.setStyleSheet("background-color: #d9534f; color: white; padding: 5px 10px; border-radius: 5px;")
         self.logout_button.clicked.connect(self.confirm_logout)
         button_layout.addWidget(self.logout_button)
-       
+
+        # Add the button layout to the header layout
         self.header_layout.addLayout(button_layout)
+
+
 
 
     def update_profile(self, dialog, new_username, new_email, new_password, confirm_password):
@@ -364,7 +458,8 @@ class ModernShoppingApp(QtWidgets.QWidget):
             # Update email
             if new_email:
                 print(f"Updating email to: {new_email}")
-                authentication.update_email(self.user, new_email)  # Replace with your logic
+                print()
+                authentication.update_email_and_verify(self.user, new_email)  # Replace with your logic
 
             # Update password
             if new_password:
@@ -468,6 +563,12 @@ class ModernShoppingApp(QtWidgets.QWidget):
             self.user_email_label.deleteLater()
             self.user_email_label = None
 
+        # Remove the verified label if it exists
+        if hasattr(self, "verified_label") and self.verified_label:
+            self.header_layout.removeWidget(self.verified_label)
+            self.verified_label.deleteLater()
+            self.verified_label = None
+
         # Remove the profile button if it exists
         if hasattr(self, "profile_button") and self.profile_button:
             self.header_layout.removeWidget(self.profile_button)
@@ -482,6 +583,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
         # Show the login button again
         self.login_button.show()
+
 
     def checkout(self):
         """Handle checkout process."""

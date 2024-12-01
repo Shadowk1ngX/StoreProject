@@ -1,7 +1,10 @@
+import firebase_admin
 import pyrebase
 import re
 import json
 import requests
+import time
+
 
 # Firebase configuration (Dont upload keys online or others can acsess our databases) Moved to offline file
 # Load Firebase configuration from a JSON file
@@ -11,6 +14,12 @@ with open("AuthKey.json", "r") as file:
 # Initialize Firebase
 firebase = pyrebase.initialize_app(firebaseConfig)
 auth = firebase.auth()
+
+#Needed API Endpoints
+api_key = firebaseConfig["apiKey"]
+update_email_url = "https://identitytoolkit.googleapis.com/v1/accounts:update"
+send_verification_url = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode"
+#update_password_url = f"https://identitytoolkit.googleapis.com/v1/accounts:update?key" add this back after clean up from funs
 
 # Helper Functions
 def is_valid_email(email):
@@ -77,10 +86,14 @@ def login(email, password):
         return True, message, user
     except Exception as e:
         error_str  = str(e)
-        error_message= get_error_message(error_str)
+        error_message = get_error_message(error_str)
 
         if "INVALID_LOGIN_CREDENTIALS" in error_message:
             message = "Either Email or Password is incorrect. Please try again."
+            print("Either Email or Password is incorrect. Please try again.")
+            return False, message, None
+        if "EMAIL_NOT_FOUND" in error_message:
+            message = "Email is incorrect or not found. Please try again."
             print("Either Email or Password is incorrect. Please try again.")
             return False, message, None
         else:
@@ -146,29 +159,149 @@ def update_display_name(user, new_display_name):
         print("Error during account update:", str(e))
 
 
-def update_email(user, new_email):
-    """Update a user's email"""
+def check_email_verified(id_token):
+    """
+    Check if the updated email is verified.
+    Args:
+        id_token (str): The user's ID token.
+    Returns:
+        bool: True if the email is verified, False otherwise.
+    """
+    account_info_url = f"https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={api_key}"
+    payload = {"idToken": id_token}
+    response = requests.post(account_info_url, json=payload)
+
+    if response.status_code == 200:
+        account_info = response.json()
+        email_verified = account_info["users"][0].get("emailVerified", False)
+        return email_verified
+    else:
+        print(f"Error checking email verification status: {response.json()}")
+        return False
+
+def wait_for_email_verification(id_token, timeout=300, interval=10):
+    """
+    Wait for the new email to be verified.
+    Args:
+        id_token (str): The user's ID token.
+        timeout (int): Maximum time to wait for verification in seconds (default: 300).
+        interval (int): Time to wait between checks in seconds (default: 10).
+    
+    Returns:
+        bool: True if email is verified within the timeout, False otherwise.
+    """
+    start_time = time.time()
+    
+    while time.time() - start_time < timeout:
+        if check_email_verified(id_token):
+            return True
+        print("Waiting for email verification...")
+        time.sleep(interval)  # Wait for the specified interval before checking again
+    
+    return False
+
+
+def send_verification_email(id_token):
+
+    payload = {
+        "requestType": "VERIFY_EMAIL",
+        "idToken": id_token
+    }
+
+    response = requests.post(f"{send_verification_url}?key={api_key}", json=payload)
+    # Check the response
+    if response.status_code == 200:
+        print(f"Verification email sent successfully. Please check your inbox.")
+    else:
+        print(f"Error sending verification email: {response.json()}")
+
+def update_email(id_token, new_email):
+    """
+    Update the user's email.
+    Args:
+        user (dict): The authenticated user's data.
+        new_email (str): The new email to update.
+    """
+    payload = {
+        "idToken": id_token,
+        "email": new_email,
+        "returnSecureToken": True
+    }
+    response = requests.post(f"{update_email_url}?key={api_key}", json=payload)
+
+    if response.status_code == 200:
+        print(f"Email successfully updated to {new_email}.")
+    else:
+        print(f"Error during email update: {response.json()}")
+
+
+def refresh_id_token(user):
+    payload = {"grant_type": "refresh_token", "refresh_token": user["refreshToken"]}
+    response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={api_key}", json=payload)
+    if response.status_code == 200:
+        refreshed_data = response.json()
+        return refreshed_data["id_token"]
+    else:
+        print(f"Error refreshing ID token: {response.json()}")
+        return None
+
+
+def update_email_and_verify(user, new_email):
+    """
+    Update the user's email and send a verification email.
+    Args:
+        user (dict): The authenticated user object.
+        new_email (str): The new email to update.
+    """
+    id_token = user["idToken"]
     try:
-        if new_email and is_valid_email(new_email):
-            auth.update_profile(user["idToken"])
-            #auth.update_user_email(user['idToken'], new_email)
-            print(f"Email updated to {new_email}.")
+        # Step 1: Validate the new email
+        if not is_valid_email(new_email):
+            print("Invalid email address provided.")
+            return
         
-        if not new_email:
-            print("No changes made.")
+        CurrentEmailIsVerified = check_email_verified(id_token)
+        if CurrentEmailIsVerified:
+            print("Current user is already verified!")
+        else:
+            print("User not verified, Please verify")
+            send_verification_email(id_token)
+            wait_for_email_verification(id_token)
+
+        id_token = refresh_id_token(user)
+        if not id_token:
+            print("Failed to refresh ID token. Cannot proceed.")
+            return
+        
+        # Step 2: Update the email
+        update_email(id_token, new_email)
+        #CurrentEmailIsVerified = check_email_verified(id_token) #Vefify new email
+      
     except Exception as e:
-        print("Error during account update:", str(e))
+        print(f"Error during email update and verification: {e}")
+
 
 def update_password(user, new_password):
     """Update the user's password."""
+    id_token = user["idToken"]
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:update?key={api_key}"
+    data = {
+        "idToken": id_token,
+        "password": new_password,
+        "returnSecureToken": True
+    }
     try:
-        if new_password and len(new_password) >= 6:
-            auth.update_user_password(user['idToken'], new_password)
+        response = requests.post(url, json=data)
+        response_data = response.json()
+        if response.status_code == 200:
             print("Password updated successfully.")
-        if not new_password:
-            print("No changes made.")
+            #return response_data
+        else:
+            print(f"Error updating password: {response_data['error']['message']}")
+            #return None
     except Exception as e:
-        print("Error during account update:", str(e))
+        print(f"Request failed: {e}")
+        #return None
 
 
 def delete_account(user):
