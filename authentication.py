@@ -71,6 +71,8 @@ def signup(email, password):
 
 def login(email, password):
     """Login an existing user."""
+    print(email)
+    print(password)
     email = email.strip()
     password = password.strip()
 
@@ -95,6 +97,9 @@ def login(email, password):
         if "EMAIL_NOT_FOUND" in error_message:
             message = "Email is incorrect or not found. Please try again."
             print("Either Email or Password is incorrect. Please try again.")
+            return False, message, None
+        if "MISSING_PASSWORD":
+            message = "You must enter a password. Please try again."
             return False, message, None
         else:
             print(e)
@@ -279,6 +284,7 @@ def update_email_and_verify(user, new_email):
       
     except Exception as e:
         print(f"Error during email update and verification: {e}")
+
 
 
 def update_password(user, new_password):

@@ -381,9 +381,15 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
          
 
-
     def update_header_for_logged_in_user(self, user_email):
         """Update the header to show the user's email and add a profile button after login."""
+
+        UserTheme = FirebaseScript.get_theme_prefrence(self.user["email"])
+        if UserTheme == "light":
+            self.apply_light_theme()
+        else:
+            self.apply_dark_theme()
+
         # Hide the login button
         self.login_button.hide()
 
@@ -609,6 +615,11 @@ class ModernShoppingApp(QtWidgets.QWidget):
         else:
             self.apply_light_theme()
             self.theme_toggle_button.setText("Switch to Dark Theme")
+
+        if self.user:   
+            FirebaseScript.set_theme_prefrence(self.user["email"],self.current_theme)
+        else:
+            print("User not logged in")
 
     def apply_light_theme(self):
         """Apply light theme styles."""

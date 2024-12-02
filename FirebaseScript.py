@@ -25,7 +25,7 @@ def GetAllItems(CollectionName):
     
     #for doc_data in DocList:
     #    print(f"Document ID: {doc_data['id']}")
-     #   print(f"Document Data: {doc_data['data']}")
+    #   print(f"Document Data: {doc_data['data']}")
     #    print()
     
     return DocList
@@ -71,9 +71,14 @@ def GetItemsByKey(CollectionName, Field, Value):
         print(f"An error occurred: {e}")
         return []
 
+def AddItemWithCustomId(collection_name, document_id, data):
+    """Add a document with a custom ID."""
+    doc_ref = db.collection(collection_name).document(document_id)
+    doc_ref.set(data)
+    #print(f"Document created with ID: {document_id}")
 
 
-def AddItem(CollectionName, data: list):
+def AddItemWIthAutoId(CollectionName, data: list):
     try:
         doc_ref = db.collection(CollectionName).add(data)
         print(f"Document added with ID: {doc_ref[1].id}")
@@ -100,11 +105,13 @@ def ModifyItem(CollectionName, document_id, update_data):
 
 #This is a test
 #GrabAllItems('products')
-data = {
+
+#How to send data to update stuff
+'''data = {
     "name" : "King",
     "age" : 18,
     "salary" : 30000
-}
+}'''
 
 #AddItem("products", data)
 #ModifyItem("products","sia4VT8h8W01X3AiNtT5",data)
@@ -114,5 +121,15 @@ data = {
 
 #grab one item function is left to do
 
+#---------------------------------------------------------------------------------------------------------------------#
+#User base
+def get_theme_prefrence(userId):
+    Doc = GetSingleItem("user_data",userId)
+    if Doc:
+        return Doc["theme"]
 
-
+def set_theme_prefrence(userEmail,theme):
+    data ={
+        "theme": theme,
+    }
+    AddItemWithCustomId("user_data", userEmail, data)
