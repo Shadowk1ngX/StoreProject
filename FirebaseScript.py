@@ -19,12 +19,6 @@ def GetAllItems(CollectionName):
         doc_data["id"] = doc.id  # Add the document ID
         DocList.append(doc_data)  # Append the full document data, including the ID
     
-    
-    #for doc_data in DocList:
-    #    print(f"Document ID: {doc_data['id']}")
-    #   print(f"Document Data: {doc_data['data']}")
-    #    print()
-    
     return DocList
 
 def GetSingleItem(CollectionName,DocumentID):

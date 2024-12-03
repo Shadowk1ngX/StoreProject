@@ -81,6 +81,16 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.filter_layout.addWidget(self.filter_button)
         self.main_layout.addWidget(self.filter_frame)
 
+        # Search Bar
+        self.search_bar_layout = QtWidgets.QHBoxLayout()
+        self.search_input = QtWidgets.QLineEdit()
+        self.search_input.setPlaceholderText("Search items...")
+        self.search_button = QtWidgets.QPushButton("Search")
+        self.search_button.clicked.connect(self.search_items)  # Connect search function
+
+        self.search_bar_layout.addWidget(self.search_input)
+        self.search_bar_layout.addWidget(self.search_button)
+
         # Items Section
         self.items_frame = QtWidgets.QFrame()
         self.items_layout = QtWidgets.QVBoxLayout(self.items_frame)
@@ -90,11 +100,12 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.view_item_button.clicked.connect(self.view_item)
         self.add_to_cart_button = QtWidgets.QPushButton("Add to Cart")
         self.add_to_cart_button.clicked.connect(self.add_to_cart)
+        self.items_layout.addLayout(self.search_bar_layout)
         self.items_layout.addWidget(self.items_label)
         self.items_layout.addWidget(self.items_list)
         self.items_layout.addWidget(self.view_item_button)
         self.items_layout.addWidget(self.add_to_cart_button)
-
+        
         # Cart Section
         self.cart_frame = QtWidgets.QFrame()
         self.cart_layout = QtWidgets.QVBoxLayout(self.cart_frame)
@@ -696,6 +707,23 @@ class ModernShoppingApp(QtWidgets.QWidget):
         except Exception as e:
             print(f"Error fetching categories from Firebase: {e}")
             QtWidgets.QMessageBox.warning(self, "Error", "Unable to fetch categories from the database.")
+
+    def search_items(self):
+        """Filter the items based on the search query."""
+        query = self.search_input.text().strip().lower()  # Get the search query
+        self.items_list.clear()
+
+        # Filter items based on the query
+        filtered_items = [
+            item for item in self.items if query in item["name"].lower()
+        ]
+
+        # Update the items list with filtered items
+        for item in filtered_items:
+            self.items_list.addItem(f"{item['name']} - ${item['price']} - Stock: {item['stock']}")
+
+        if not filtered_items:
+            QtWidgets.QMessageBox.information(self, "No Results", "No items matched your search.")
 
 
     def load_items(self):
