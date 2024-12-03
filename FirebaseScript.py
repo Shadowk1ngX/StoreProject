@@ -10,18 +10,15 @@ db = firestore.client(app)
 
 def GetAllItems(CollectionName):
     print("Grabbing All Items")
-    docs = (
-        db.collection(CollectionName)
-        .stream()
-    )
+    docs = db.collection(CollectionName).stream()
     
     DocList = []
 
     for doc in docs:
         doc_data = doc.to_dict()
-        doc_data["id"] = doc.id
-        doc_data['data'] =  doc._data
-        DocList.append(doc_data['data'])
+        doc_data["id"] = doc.id  # Add the document ID
+        DocList.append(doc_data)  # Append the full document data, including the ID
+    
     
     #for doc_data in DocList:
     #    print(f"Document ID: {doc_data['id']}")
@@ -98,11 +95,22 @@ def ModifyItem(CollectionName, document_id, update_data):
     try:
         doc_ref = db.collection(CollectionName).document(document_id)
         doc_ref.update(update_data)
-        print(f"Document with ID: {document_id} updated successfully.")
+        #print(f"Document with ID: {document_id} updated successfully.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
+def SubtractStock(CollectionName, document_id, quantity):
+    ItemData = GetSingleItem(CollectionName, document_id)
+    CurrentStock = int(ItemData["stock"])
+    CurrentStock -= quantity
+    ModifyItem(CollectionName,document_id,{"stock": CurrentStock})
 
+def AddStock(CollectionName, document_id, quantity):
+    ItemData = GetSingleItem(CollectionName, document_id)
+    CurrentStock = int(ItemData["stock"])
+    CurrentStock += quantity
+    ModifyItem(CollectionName,document_id,{"stock": CurrentStock})
+    
 #This is a test
 #GrabAllItems('products')
 

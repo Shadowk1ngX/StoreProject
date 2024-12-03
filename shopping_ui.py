@@ -512,6 +512,18 @@ class ModernShoppingApp(QtWidgets.QWidget):
             item_name = item_parts[0]
             item_price = float(item_parts[1].split(" - ")[0])  # Extract price as float
 
+            item = next((item for item in self.items if item["name"] == item_name), None)
+            if not item:
+                QtWidgets.QMessageBox.warning(self, "Item Not Found", "The selected item was not found in the database.")
+                return
+
+            item_id = item["id"]  # Grab the document ID
+            if not item_id:
+                print("NO ID FOUND")
+                return
+            FirebaseScript.SubtractStock("products",item_id,1)
+            
+
             # Create a custom widget for the cart item with a "Remove X" button
             cart_item_widget = QtWidgets.QWidget()
             cart_item_layout = QtWidgets.QHBoxLayout(cart_item_widget)
@@ -533,7 +545,11 @@ class ModernShoppingApp(QtWidgets.QWidget):
             self.cart_list.setItemWidget(list_item, cart_item_widget)
 
             # Update the total price
-            self.cart.append((item_name, item_price))
+            self.cart.append({
+                "id": item_id,  # Store the item's ID
+                "name": item_name,  # Store the item's name
+                "price": item_price  # Store the item's price
+            })
             self.update_total_price(item_price)
         else:
             QtWidgets.QMessageBox.warning(self, "Invalid Item", "Unable to extract item details. Please try again.")
@@ -551,7 +567,10 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
         # Remove only one instance of the item from the cart list (not all instances)
         for cart_item in self.cart:
-            if cart_item[1] == item_price:  # Match the price
+            if cart_item["price"] == item_price:  # Match the price
+                item_id = cart_item["id"]  # Access the item's ID
+                print(f"Removing item with ID: {item_id}")  # Debugging output
+                FirebaseScript.AddStock("products",item_id,1)
                 self.cart.remove(cart_item)  # Remove the first matching instance
                 break
 
@@ -651,6 +670,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
                     "price": item.get("price", 0.0),  # Get price or default to 0.0
                     "stock": item.get("stock", 0),
                     "image": item.get("image", ""),  # Include the image field
+                    "id": item.get("id","")
                 }
                 for item in items
             ]
