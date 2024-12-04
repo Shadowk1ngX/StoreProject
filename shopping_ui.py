@@ -868,6 +868,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
         # Clear the items_list to avoid duplicates
         self.items_list.clear()
+        self.items_list.clear()
 
         # Filter items based on the selected category
         filtered_items = [
