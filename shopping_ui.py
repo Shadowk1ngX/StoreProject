@@ -184,6 +184,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
                 self.add_new_item_to_ui(doc_id, doc)
             elif change.type.name == "REMOVED":
                 self.remove_item_from_ui(doc_id)
+        self.items = list({item["id"]: item for item in self.items}.values())
                 
 
 
@@ -807,6 +808,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
                 }
                 for item in items
             ]
+        
         except Exception as e:
             print(f"Error fetching items from Firebase: {e}")
             return []
