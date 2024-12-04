@@ -224,7 +224,7 @@ def update_email(id_token, new_email):
     """
     Update the user's email.
     Args:
-        user (dict): The authenticated user's data.
+        id_token (str): The user's ID token.
         new_email (str): The new email to update.
     """
     payload = {
@@ -237,7 +237,12 @@ def update_email(id_token, new_email):
     if response.status_code == 200:
         print(f"Email successfully updated to {new_email}.")
     else:
-        print(f"Error during email update: {response.json()}")
+        error_message = response.json().get("error", {}).get("message", "Unknown error")
+        if "EMAIL_EXISTS" in error_message:
+            print(f"Error: The email '{new_email}' is already in use by another account.")
+        else:
+            print(f"Error during email update: {error_message}")
+
 
 
 def refresh_id_token(user):
@@ -324,46 +329,3 @@ def delete_account(user):
         print("Account deletion canceled.")
 
 
-def main_menu(user):
-    """Main menu for logged-in users."""
-    while True:
-        print("\n--- Main Menu ---")
-        print("1. Logout")
-        print("2. Update Account")
-        print("3. Delete Account")
-        print("4. Exit")
-        choice = input("Enter your choice: ").strip()
-
-        if choice == "1":
-            logout()
-            break
-        elif choice == "2":
-            update_account(user)
-        elif choice == "3":
-            delete_account(user)
-            break
-        elif choice == "4":
-            print("Exiting. Goodbye!")
-            exit()
-        else:
-            print("Invalid choice. Please try again.")
-
-
-# Main Program Flow
-#def main():
-#    print("Welcome to the Membership Portal!")
-#    while True:
-#        ans = input("Are you a new user? [Yes/No]: ").strip().lower()
-#        if ans == "yes":
-#            signup()
-#            break
-#        elif ans == "no":
-#            login()
-#            break
-#        else:
-#            print("Invalid input. Please enter 'Yes' or 'No'.")
-
-
-# Start the Program
-#if __name__ == "__main__":
-#    main()

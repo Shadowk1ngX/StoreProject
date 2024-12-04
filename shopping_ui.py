@@ -40,6 +40,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
         FirebaseScript.setup_firestore_listener("products",self.handle_firestore_changes)
 
         # Initialize the cart as an empty list
+        self.items = []
         self.cart = []
         self.total_price = 0.0
 
@@ -136,7 +137,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
         # Fetch and Load Items from Firebase
         self.items = self.fetch_items_from_firebase("products") 
-        self.load_items()
+        #self.load_items()
 
         # Fetch categories from the database and update the combo box
         self.update_categories()
@@ -144,25 +145,46 @@ class ModernShoppingApp(QtWidgets.QWidget):
     
     @QtCore.pyqtSlot(str, str, float, int)
     def update_item_in_ui(self, doc_id, name, price, stock):
-        """Update an existing item in the UI."""
+        """Update an existing item in the UI and cart."""
         print(f"Updating item in UI: ID={doc_id}, Name={name}, Price={price}, Stock={stock}")
+
+        # Update the item in the main item list
         for i in range(self.items_list.count()):
             list_item = self.items_list.item(i)
             if list_item.data(QtCore.Qt.UserRole) == doc_id:
                 list_item.setText(f"{name} - ${price} - Stock: {stock}")
-                return
-        print(f"Item with ID {doc_id} not found in UI")
+                break
+        else:
+            print(f"Item with ID {doc_id} not found in items_list")
+
+        # Update the item in the cart
+        for i in range(self.cart_list.count()):
+            list_item = self.cart_list.item(i)
+            if list_item.data(QtCore.Qt.UserRole) == doc_id:
+                cart_item_widget = self.cart_list.itemWidget(list_item)
+                cart_item_label = cart_item_widget.findChild(QtWidgets.QLabel)
+                cart_item_label.setText(f"{name} - ${price:.2f}")
+                print(f"Updated item in cart: ID={doc_id}")
+                break
+        else:
+            print(f"Item with ID {doc_id} not found in cart_list")
+
+
 
     
-    def handle_firestore_changes(self, docs_snapshot, changes, read_time):
+    def handle_firestore_changes(self, docs_snapshot, changes, read_time): 
         for change in changes:
+            print(change.type.name)
             doc = change.document.to_dict()
             doc_id = change.document.id
 
             if change.type.name == "MODIFIED":
-                print(f"SCHEDULE UPDATE")
                 self.debug_and_update_ui(doc_id, doc)
-                print("SHOULD BE SET UP")
+            elif change.type.name == "ADDED":
+                self.add_new_item_to_ui(doc_id, doc)
+            elif change.type.name == "REMOVED":
+                self.remove_item_from_ui(doc_id)
+                
 
 
     def sanitize_data(self, data):
@@ -174,11 +196,52 @@ class ModernShoppingApp(QtWidgets.QWidget):
             "id": str(data.get("id", ""))
         }
 
+    def add_new_item_to_ui(self, doc_id, doc):
+        """Add a new item to the UI."""
+        # Sanitize the data (convert Firestore types to native Python types)
+        sanitized_doc = {
+            "id": str(doc_id),
+            "name": str(doc.get("name", "Unnamed")),
+            "price": float(doc.get("price", 0.0)),
+            "stock": int(doc.get("stock", 0)),
+            "category": str(doc.get("category", "Uncategorized")),
+            "image": str(doc.get("image", "")),
+        }
+
+        # Add the new item to the internal items list
+        self.items.append(sanitized_doc)
+
+        # Add the new item to the items_list widget
+        list_item = QtWidgets.QListWidgetItem(f"{sanitized_doc['name']} - ${sanitized_doc['price']} - Stock: {sanitized_doc['stock']}")
+        list_item.setData(QtCore.Qt.UserRole, sanitized_doc["id"])  # Store the document ID in the item's data
+        self.items_list.addItem(list_item)
+
+        #print(f"Item added to UI: {sanitized_doc}")
+
+
+    def remove_item_from_ui(self, doc_id):
+        """Remove an item from the UI."""
+        # Find and remove the item from the internal items list
+        self.items = [item for item in self.items if item["id"] != doc_id]
+
+        # Find and remove the corresponding item from the items_list widget
+        for i in range(self.items_list.count()):
+            list_item = self.items_list.item(i)
+            if list_item.data(QtCore.Qt.UserRole) == doc_id:
+                self.items_list.takeItem(i)  # Remove the item from the widget
+                print(f"Item with ID {doc_id} removed from UI")
+                return
+
+        print(f"Item with ID {doc_id} not found in UI")
+
 
 
     def debug_and_update_ui(self, doc_id, doc):
+        """Update the UI and cart with the latest item data."""
         sanitized_doc = self.sanitize_data(doc)
         print(f"Executing scheduled update for document ID: {doc_id} with data: {sanitized_doc}")
+
+        # Update the items_list
         QtCore.QMetaObject.invokeMethod(
             self,
             "update_item_in_ui",
@@ -188,6 +251,15 @@ class ModernShoppingApp(QtWidgets.QWidget):
             QtCore.Q_ARG(float, sanitized_doc["price"]),
             QtCore.Q_ARG(int, sanitized_doc["stock"])
         )
+
+        # Update items in the cart if their price or stock changes
+        for i in range(self.cart_list.count()):
+            list_item = self.cart_list.item(i)
+            if list_item.data(QtCore.Qt.UserRole) == doc_id:
+                cart_item_widget = self.cart_list.itemWidget(list_item)
+                cart_item_label = cart_item_widget.layout().itemAt(0).widget()  # QLabel for the item
+                cart_item_label.setText(f"{sanitized_doc['name']} - ${sanitized_doc['price']:.2f}")
+
 
 
 
@@ -527,6 +599,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
                 self.user_email_label.setText(f"Logged in as: {DisplayName}")
 
             # Update email
+            #Fix so that if email is already used you notify the user
             if new_email:
                 print(f"Updating email to: {new_email}")
                 print()
@@ -570,77 +643,72 @@ class ModernShoppingApp(QtWidgets.QWidget):
             QtWidgets.QMessageBox.warning(self, "No Item Selected", "Please select an item to add to the cart.")
             return
 
-        # Extract the name and price from the selected item's text
-        item_text = selected_item.text()
-        item_parts = item_text.split(" - $")  # Split to separate name and price
-        if len(item_parts) >= 2:  # Ensure both name and price exist
-            item_name = item_parts[0]
-            item_price = float(item_parts[1].split(" - ")[0])  # Extract price as float
+        # Extract the document ID and fetch the latest data
+        item_id = selected_item.data(QtCore.Qt.UserRole)
+        item = next((item for item in self.items if item["id"] == item_id), None)
 
-            item = next((item for item in self.items if item["name"] == item_name), None)
-            if not item:
-                QtWidgets.QMessageBox.warning(self, "Item Not Found", "The selected item was not found in the database.")
-                return
+        if not item:
+            QtWidgets.QMessageBox.warning(self, "Item Not Found", "The selected item was not found in the database.")
+            return
 
-            item_id = item["id"]  # Grab the document ID
-            if not item_id:
-                print("NO ID FOUND")
-                return
-            FirebaseScript.SubtractStock("products",item_id,1)
-            
+        # Get the latest price and stock
+        item_price = item["price"]
 
-            # Create a custom widget for the cart item with a "Remove X" button
-            cart_item_widget = QtWidgets.QWidget()
-            cart_item_layout = QtWidgets.QHBoxLayout(cart_item_widget)
-            cart_item_label = QtWidgets.QLabel(f"{item_name} - ${item_price:.2f}")
-            remove_button = QtWidgets.QPushButton("X")
-            remove_button.setStyleSheet("color: red; font-weight: bold;")
-            remove_button.clicked.connect(lambda: self.remove_from_cart(cart_item_widget, item_price))
+        # Subtract stock in the database
+        FirebaseScript.SubtractStock("products", item_id, 1)
 
-            # Add the label and button to the layout
-            cart_item_layout.addWidget(cart_item_label)
-            cart_item_layout.addWidget(remove_button)
-            cart_item_layout.setContentsMargins(0, 0, 0, 0)  # Remove extra spacing
-            cart_item_widget.setLayout(cart_item_layout)
+        # Create a custom widget for the cart item
+        cart_item_widget = QtWidgets.QWidget()
+        cart_item_layout = QtWidgets.QHBoxLayout(cart_item_widget)
+        cart_item_label = QtWidgets.QLabel(f"{item['name']} - ${item_price:.2f}")
+        remove_button = QtWidgets.QPushButton("X")
+        remove_button.setStyleSheet("color: red; font-weight: bold;")
+        remove_button.clicked.connect(lambda: self.remove_from_cart(cart_item_widget, item_id, item_price))
 
-            # Add the custom widget to the cart list
-            list_item = QtWidgets.QListWidgetItem(self.cart_list)
-            list_item.setSizeHint(cart_item_widget.sizeHint())
-            self.cart_list.addItem(list_item)
-            self.cart_list.setItemWidget(list_item, cart_item_widget)
+        # Add the label and button to the layout
+        cart_item_layout.addWidget(cart_item_label)
+        cart_item_layout.addWidget(remove_button)
+        cart_item_layout.setContentsMargins(0, 0, 0, 0)
+        cart_item_widget.setLayout(cart_item_layout)
 
-            # Update the total price
-            self.cart.append({
-                "id": item_id,  # Store the item's ID
-                "name": item_name,  # Store the item's name
-                "price": item_price  # Store the item's price
-            })
-            self.update_total_price(item_price)
-        else:
-            QtWidgets.QMessageBox.warning(self, "Invalid Item", "Unable to extract item details. Please try again.")
-          
+        # Add the custom widget to the cart list
+        list_item = QtWidgets.QListWidgetItem(self.cart_list)
+        list_item.setSizeHint(cart_item_widget.sizeHint())
+        list_item.setData(QtCore.Qt.UserRole, item_id)
+        self.cart_list.addItem(list_item)
+        self.cart_list.setItemWidget(list_item, cart_item_widget)
+
+        # Update the cart and total price
+        self.cart.append({
+            "id": item_id,
+            "name": item["name"],
+            "price": item_price
+        })
+        self.update_total_price(item_price)
 
 
-    def remove_from_cart(self, cart_item_widget, item_price):
+
+
+    def remove_from_cart(self, cart_item_widget, item_id, item_price):
         """Remove an item from the cart."""
         # Remove the widget from the cart_list visually
         for i in range(self.cart_list.count()):
-            item = self.cart_list.item(i)
-            if self.cart_list.itemWidget(item) == cart_item_widget:
-                self.cart_list.takeItem(i)  # Remove the widget from the list
+            list_item = self.cart_list.item(i)
+            if list_item.data(QtCore.Qt.UserRole) == item_id:
+                self.cart_list.takeItem(i)  # Remove the item from the widget
                 break
 
         # Remove only one instance of the item from the cart list (not all instances)
         for cart_item in self.cart:
-            if cart_item["price"] == item_price:  # Match the price
-                item_id = cart_item["id"]  # Access the item's ID
-                print(f"Removing item with ID: {item_id}")  # Debugging output
-                FirebaseScript.AddStock("products",item_id,1)
+            if cart_item["id"] == item_id:
+                FirebaseScript.AddStock("products", item_id, 1)
                 self.cart.remove(cart_item)  # Remove the first matching instance
                 break
 
         # Update the total price
         self.update_total_price(-item_price)
+
+
 
     def reset_ui_to_logged_out_state(self):
         """Reset the UI to the logged-out state."""
@@ -764,7 +832,9 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
     def search_items(self):
         """Filter the items based on the search query."""
-        query = self.search_input.text().strip().lower()  # Get the search query
+        query = self.search_input.text().strip().lower()
+
+        # Clear the items_list to avoid duplicates
         self.items_list.clear()
 
         # Filter items based on the query
@@ -772,12 +842,15 @@ class ModernShoppingApp(QtWidgets.QWidget):
             item for item in self.items if query in item["name"].lower()
         ]
 
-        # Update the items list with filtered items
+        # Add search results to the list
         for item in filtered_items:
-            self.items_list.addItem(f"{item['name']} - ${item['price']} - Stock: {item['stock']}")
+            list_item = QtWidgets.QListWidgetItem(f"{item['name']} - ${item['price']} - Stock: {item['stock']}")
+            list_item.setData(QtCore.Qt.UserRole, item["id"])  # Store the item ID
+            self.items_list.addItem(list_item)
 
         if not filtered_items:
             QtWidgets.QMessageBox.information(self, "No Results", "No items matched your search.")
+
 
 
     def load_items(self):
@@ -792,12 +865,21 @@ class ModernShoppingApp(QtWidgets.QWidget):
     def filter_items(self):
         """Filter items based on the selected category."""
         selected_category = self.filter_combo.currentText()
+
+        # Clear the items_list to avoid duplicates
         self.items_list.clear()
+
+        # Filter items based on the selected category
         filtered_items = [
             item for item in self.items if selected_category == "All" or item["category"] == selected_category
         ]
+
+        # Add filtered items to the list
         for item in filtered_items:
-            self.items_list.addItem(f"{item['name']} - ${item['price']} - Stock: {item['stock']}")
+            list_item = QtWidgets.QListWidgetItem(f"{item['name']} - ${item['price']} - Stock: {item['stock']}")
+            list_item.setData(QtCore.Qt.UserRole, item["id"])  # Store the item ID
+            self.items_list.addItem(list_item)
+
 
 
     def fetch_image_data(self, image_url):
@@ -814,3 +896,44 @@ class ModernShoppingApp(QtWidgets.QWidget):
         """Update the total price of the cart."""
         self.total_price += price_change
         self.total_price_label.setText(f"Total: ${self.total_price:.2f}")
+
+    def closeEvent(self, event):
+        """Handle cleanup or final tasks before the program closes."""
+        # Run your specific code here
+        print("Performing cleanup before closing...")
+
+        # For example, save data, log out the user, etc.
+        if self.user:
+            print("Logging out user...")
+            self.confirm_logout(None)
+
+        # You can prompt the user to confirm exit
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirm Exit",
+            "Are you sure you want to exit?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+        )
+
+        if reply == QtWidgets.QMessageBox.Yes:
+                # Iterate over all items in the cart and remove them
+            while self.cart:  # Use a while loop as self.cart will be modified during iteration
+                cart_item = self.cart[0]  # Always grab the first item since the list is shrinking
+                item_id = cart_item["id"]
+                item_price = cart_item["price"]
+                print(f"Removing item from cart: ID={item_id}, Price=${item_price}")
+            
+                # Find the corresponding cart_item_widget
+                for i in range(self.cart_list.count()):
+                    list_item = self.cart_list.item(i)
+                    if list_item.data(QtCore.Qt.UserRole) == item_id:
+                        cart_item_widget = self.cart_list.itemWidget(list_item)
+                        self.remove_from_cart(cart_item_widget, item_id, item_price)
+                        break
+
+            print("All cart items removed. Closing program.")
+            event.accept()  # Accept the close event
+            print("Program closed.")
+
+        else:
+            event.ignore()  # Ignore the close event and keep the program running
