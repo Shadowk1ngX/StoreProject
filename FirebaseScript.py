@@ -1,6 +1,8 @@
 import firebase_admin as fba
 from firebase_admin import credentials, firestore
 
+
+
 #Variables
 cred = credentials.Certificate('Key.json')
 
@@ -8,8 +10,28 @@ if not fba._apps:
     app = fba.initialize_app(cred)
 db = firestore.client(app)
 
+
+def setup_firestore_listener(collection_name, callback):
+    """
+    Set up a real-time listener for a Firestore collection.
+
+    :param collection_name: The name of the Firestore collection to listen to.
+    :param callback: The function to handle changes in the collection.
+    """
+    #print(f"Setting up real-time listener for collection: {collection_name}")
+    collection_ref = db.collection(collection_name)
+
+    # Attach listener for real-time updates
+    def on_snapshot(docs_snapshot, changes, read_time):
+        callback(docs_snapshot, changes, read_time)  # Call the provided callback with Firestore snapshot data
+
+
+    # Attach the snapshot listener
+    collection_ref.on_snapshot(on_snapshot)
+
+
 def GetAllItems(CollectionName):
-    print("Grabbing All Items")
+    #print("Grabbing All Items")
     docs = db.collection(CollectionName).stream()
     
     DocList = []

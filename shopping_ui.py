@@ -5,6 +5,10 @@ import requests
 import authentication
 
 
+import threading
+print(f"UI update running in thread: {threading.current_thread().name}")
+
+
 class VerificationThread(QThread):
     finished = pyqtSignal(bool)  # Signal to indicate verification result
 
@@ -33,6 +37,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
         self.current_theme = "dark"  # Default theme
         self.apply_dark_theme()
         self.user = None
+        FirebaseScript.setup_firestore_listener("products",self.handle_firestore_changes)
 
         # Initialize the cart as an empty list
         self.cart = []
@@ -44,7 +49,7 @@ class ModernShoppingApp(QtWidgets.QWidget):
         # Header Section
         self.header_frame = QtWidgets.QFrame()  # A frame to house header and button
         self.header_layout = QtWidgets.QHBoxLayout(self.header_frame)  # Horizontal layout for the header
-        self.header_label = QtWidgets.QLabel("🛒 Temp Name")
+        self.header_label = QtWidgets.QLabel("🛒 Simple Shop")
         self.header_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #007bff; margin: 10px;")
         self.header_label.setAlignment(QtCore.Qt.AlignCenter)
         #self.main_layout.addWidget(self.header_label)
@@ -135,6 +140,55 @@ class ModernShoppingApp(QtWidgets.QWidget):
 
         # Fetch categories from the database and update the combo box
         self.update_categories()
+
+    
+    @QtCore.pyqtSlot(str, str, float, int)
+    def update_item_in_ui(self, doc_id, name, price, stock):
+        """Update an existing item in the UI."""
+        print(f"Updating item in UI: ID={doc_id}, Name={name}, Price={price}, Stock={stock}")
+        for i in range(self.items_list.count()):
+            list_item = self.items_list.item(i)
+            if list_item.data(QtCore.Qt.UserRole) == doc_id:
+                list_item.setText(f"{name} - ${price} - Stock: {stock}")
+                return
+        print(f"Item with ID {doc_id} not found in UI")
+
+    
+    def handle_firestore_changes(self, docs_snapshot, changes, read_time):
+        for change in changes:
+            doc = change.document.to_dict()
+            doc_id = change.document.id
+
+            if change.type.name == "MODIFIED":
+                print(f"SCHEDULE UPDATE")
+                self.debug_and_update_ui(doc_id, doc)
+                print("SHOULD BE SET UP")
+
+
+    def sanitize_data(self, data):
+        """Convert Firestore data into native Python types."""
+        return {
+            "name": str(data.get("name", "Unnamed")),
+            "price": float(data.get("price", 0.0)),
+            "stock": int(data.get("stock", 0)),
+            "id": str(data.get("id", ""))
+        }
+
+
+
+    def debug_and_update_ui(self, doc_id, doc):
+        sanitized_doc = self.sanitize_data(doc)
+        print(f"Executing scheduled update for document ID: {doc_id} with data: {sanitized_doc}")
+        QtCore.QMetaObject.invokeMethod(
+            self,
+            "update_item_in_ui",
+            QtCore.Qt.QueuedConnection,
+            QtCore.Q_ARG(str, doc_id),
+            QtCore.Q_ARG(str, sanitized_doc["name"]),
+            QtCore.Q_ARG(float, sanitized_doc["price"]),
+            QtCore.Q_ARG(int, sanitized_doc["stock"])
+        )
+
 
 
     def view_item(self):
@@ -730,7 +784,10 @@ class ModernShoppingApp(QtWidgets.QWidget):
         """Load items into the list widget."""
         self.items_list.clear()
         for item in self.items:
-            self.items_list.addItem(f"{item['name']} - ${item['price']} - Stock: {item['stock']}")
+            #self.items_list.addItem(f"{item['name']} - ${item['price']} - Stock: {item['stock']}")
+            list_item = QtWidgets.QListWidgetItem(f"{item['name']} - ${item['price']} - Stock: {item['stock']}")
+            list_item.setData(QtCore.Qt.UserRole, item["id"])  # Store the item ID in the list item's data
+            self.items_list.addItem(list_item)
 
     def filter_items(self):
         """Filter items based on the selected category."""
