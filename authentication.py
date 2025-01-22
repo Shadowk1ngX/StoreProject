@@ -4,11 +4,14 @@ import re
 import json
 import requests
 import time
+import os
 
+# Get the current working directory of the script or executable
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Firebase configuration (Dont upload keys online or others can acsess our databases) Moved to offline file
-# Load Firebase configuration from a JSON file
-with open("AuthKey.json", "r") as file:
+# Load the Firebase configuration JSON file
+auth_key_path = os.path.join(base_dir, "AuthKey.json")
+with open(auth_key_path, "r") as file:
     firebaseConfig = json.load(file)
 
 # Initialize Firebase
@@ -52,7 +55,7 @@ def signup(email, password):
     try:
         user = auth.create_user_with_email_and_password(email, password)
         print(f"Signup successful! Welcome, {email}")
-        return True        message = f"Signup successful! Welcome, {email}"
+        message = f"Signup successful! Welcome, {email}"
         return True, message, user
         #login()  # Prompt user to log in after signing up
     except Exception as e:
